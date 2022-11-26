@@ -18,7 +18,8 @@ impl Vec2 {
 }
 
 pub enum Msg {
-    FetchOk(ImageBitmap),
+    OneImageOk(Vec<ImageData>, Vec<Vec<u8>>),
+    Register(ImageBitmap, Vec<ImageData>, Vec<Vec<u8>>),
     Render,
 }
 
@@ -52,20 +53,44 @@ impl Component for AnimationCanvas {
     type Properties = ();
     type Message = Msg;
     fn create(ctx: &Context<Self>) -> Self {
-        let crab_banzai_data = dot_data("crab_down");
-        let image_rgba = crab_banzai_data.create_color_dot_map("TURQUOISE");
+        let mut image_data_list = Vec::new();
+        let mut image_rgb_list = Vec::new();
 
+        let image_dot = dot_data("crab_banzai");
+        let image_rgba = image_dot.create_color_dot_map("TURQUOISE");
         let image_data = ImageData::new_with_u8_clamped_array_and_sh(
             Clamped(&image_rgba),
-            crab_banzai_data.width,
-            crab_banzai_data.height,
+            image_dot.width,
+            image_dot.height,
         )
         .unwrap();
+        image_data_list.push(image_data);
+        image_rgb_list.push(image_rgba);
 
-        ctx.link().send_future(async {
-            let image_bitmap = imagedata2bitmap(image_data).await.unwrap();
-            Msg::FetchOk(image_bitmap)
-        });
+        let image_dot = dot_data("octopus_open");
+        let image_rgba = image_dot.create_color_dot_map("PURPLE");
+        let image_data = ImageData::new_with_u8_clamped_array_and_sh(
+            Clamped(&image_rgba),
+            image_dot.width,
+            image_dot.height,
+        )
+        .unwrap();
+        image_data_list.push(image_data);
+        image_rgb_list.push(image_rgba);
+
+        let image_dot = dot_data("squid_open");
+        let image_rgba = image_dot.create_color_dot_map("GREEN");
+        let image_data = ImageData::new_with_u8_clamped_array_and_sh(
+            Clamped(&image_rgba),
+            image_dot.width,
+            image_dot.height,
+        )
+        .unwrap();
+        image_data_list.push(image_data);
+        image_rgb_list.push(image_rgba);
+
+        ctx.link()
+            .send_future(async { Msg::OneImageOk(image_data_list, image_rgb_list) });
 
         let comp_ctx = ctx.link().clone();
         let callback =
@@ -79,15 +104,28 @@ impl Component for AnimationCanvas {
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            // ビットマップ画像取得完了
-            Msg::FetchOk(image_bitmap) => {
+            // 1枚のビットマップ画像取得完了
+            Msg::OneImageOk(mut image_data_list, _image_rgb) => {
+                if let Some(image_data) = image_data_list.pop() {
+                    ctx.link().send_future(async {
+                        let image_bitmap = imagedata2bitmap(image_data).await.unwrap();
+                        Msg::Register(image_bitmap, image_data_list, _image_rgb)
+                    });
+                    true
+                } else {
+                    ctx.link().send_message(Msg::Render);
+                    true
+                }
+            }
+            Msg::Register(image_bitmap, image_data_list, image_rgb) => {
                 self.enemys_list.push(Enemy {
                     width: image_bitmap.width() as f64 * 3.,
                     height: image_bitmap.height() as f64 * 3.,
-                    pos: Vec2::new(50., 50.),
+                    pos: Vec2::new(200. + 50. * image_data_list.len() as f64, 50.),
                     image: image_bitmap,
                 });
-                ctx.link().send_message(Msg::Render);
+                ctx.link()
+                    .send_message(Msg::OneImageOk(image_data_list, image_rgb));
                 true
             }
             // 描画処理
