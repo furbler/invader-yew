@@ -27,9 +27,9 @@ struct Enemy {
 }
 
 impl Enemy {
-    fn update(&mut self) {
+    fn update(&mut self, move_dir: i32) {
         if self.move_turn {
-            self.pos.x += 30.;
+            self.pos.x += 30. * move_dir as f64;
         }
     }
 
@@ -72,6 +72,13 @@ impl EnemyType {
 }
 
 struct EnemyManage {
+    // 敵の左方向、右方向の移動範囲限界のx座標
+    left_border: f64,
+    right_border: f64,
+    // 移動方向(正の値は右、負の値は左に向かう)
+    move_dir: i32,
+    // 次フレームで移動方向を反転すべきか否か
+    move_dir_invert: bool,
     images_list: HashMap<EnemyType, ImageBitmap>,
     enemys_list: Vec<Enemy>,
 }
@@ -129,6 +136,11 @@ impl EnemyManage {
         self.enemys_list[0].move_turn = true;
     }
     fn update(&mut self) {
+        // 各敵個体の移動処理
+        self.enemys_list.iter_mut().for_each(|enemy| {
+            enemy.update(self.move_dir);
+        });
+
         // 移動した敵インベーダーの個体番号を取得
         let mut move_enemy_index = 0;
         for (index, enemy) in self.enemys_list.iter().enumerate() {
@@ -136,6 +148,13 @@ impl EnemyManage {
                 move_enemy_index = index;
                 break;
             }
+        }
+        // 動いた個体が制限範囲外に出た場合
+        if self.enemys_list[move_enemy_index].pos.x < self.left_border
+            || self.right_border < self.enemys_list[move_enemy_index].pos.x
+        {
+            // 移動方向反転フラグを立てる
+            self.move_dir_invert = true;
         }
 
         // 移動する個体を変える
@@ -145,10 +164,22 @@ impl EnemyManage {
         if move_enemy_index >= self.enemys_list.len() {
             // 最後の個体だったら、最初の個体に戻る
             self.enemys_list[0].move_turn = true;
+            // 移動方向反転フラグが立っている場合
+            if self.move_dir_invert {
+                // 移動方向を反転
+                self.move_dir *= -1;
+                // 移動方向反転フラグをリセット
+                self.move_dir_invert = false;
+            }
         } else {
             // 次の個体を動かす
             self.enemys_list[move_enemy_index].move_turn = true;
         }
+    }
+    fn render(&mut self, ctx: &CanvasRenderingContext2d) {
+        self.enemys_list.iter_mut().for_each(|enemy| {
+            enemy.render(ctx);
+        });
     }
 }
 
@@ -209,6 +240,10 @@ impl Component for AnimationCanvas {
         Self {
             canvas: NodeRef::default(),
             enemy_manage: EnemyManage {
+                left_border: 50.,
+                right_border: 730.,
+                move_dir: 1,
+                move_dir_invert: false,
                 images_list: HashMap::new(),
                 enemys_list: Vec::new(),
             },
@@ -302,11 +337,8 @@ impl AnimationCanvas {
         // 画像のぼやけを防ぐ
         ctx.set_image_smoothing_enabled(false);
 
-        self.enemy_manage.enemys_list.iter_mut().for_each(|enemy| {
-            enemy.update();
-            enemy.render(&ctx);
-        });
         self.enemy_manage.update();
+        self.enemy_manage.render(&ctx);
 
         log::info!(
             "canvas width() = {}, canvas height() = {}",
