@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-
 use wasm_bindgen::Clamped;
 use wasm_bindgen::{prelude::Closure, JsCast, JsValue};
 use web_sys::{window, ImageBitmap, ImageData};
@@ -28,11 +27,12 @@ pub enum Msg {
         Vec<Vec<u8>>,
         (ImageType, ImageBitmap),
     ),
-    RegisterCharacter,
-    Render,
+    Initialize,
+    MainLoop,
 }
 #[derive(Eq, Hash, PartialEq, Clone)]
 pub enum ImageType {
+    Player,
     OctopusOpen,
     OctopusClose,
     CrabBanzai,
@@ -44,6 +44,7 @@ pub enum ImageType {
 impl ImageType {
     fn ret_all_types() -> Vec<ImageType> {
         vec![
+            ImageType::Player,
             ImageType::CrabBanzai,
             ImageType::CrabDown,
             ImageType::OctopusOpen,
@@ -51,6 +52,27 @@ impl ImageType {
             ImageType::SquidOpen,
             ImageType::SquidClose,
         ]
+    }
+}
+
+struct Player {
+    width: f64,  // 描画サイズの幅 [pixel]
+    height: f64, // 描画サイズの高さ [pixel]
+    pos: Vec2,   // 中心位置
+    image: Option<ImageBitmap>,
+}
+
+impl Player {
+    fn update(&self) {}
+    fn render(&self, ctx: &CanvasRenderingContext2d) {
+        ctx.draw_image_with_image_bitmap_and_dw_and_dh(
+            &self.image.as_ref().unwrap(),
+            self.pos.x - self.width / 2.,
+            self.pos.y - self.height / 2.,
+            self.width,
+            self.height,
+        )
+        .unwrap();
     }
 }
 
@@ -71,7 +93,7 @@ impl Enemy {
             return;
         }
         // 方向を考慮して動く
-        self.pos.x += 30. * move_dir as f64;
+        self.pos.x += 20. * move_dir as f64;
         // 表示する画像を切り替える
         self.show_image_type = !self.show_image_type
     }
@@ -217,6 +239,7 @@ impl EnemyManage {
 
 struct AnimationCanvas {
     canvas: NodeRef,
+    player: Player,
     enemy_manage: EnemyManage,
     callback: Closure<dyn FnMut()>,
 }
@@ -228,6 +251,17 @@ impl Component for AnimationCanvas {
         let mut image_data_list: HashMap<ImageType, ImageData> = HashMap::new();
         // ダングリング防止のため、対応するImageDataがある間は保存する
         let mut image_rgb_list = Vec::new();
+
+        let image_dot = dot_data::ret_dot_data("player");
+        let image_rgba = image_dot.create_color_dot_map("TURQUOISE");
+        let image_data = ImageData::new_with_u8_clamped_array_and_sh(
+            Clamped(&image_rgba),
+            image_dot.width,
+            image_dot.height,
+        )
+        .unwrap();
+        image_data_list.insert(ImageType::Player, image_data);
+        image_rgb_list.push(image_rgba);
 
         let image_dot = dot_data::ret_dot_data("crab_banzai");
         let image_rgba = image_dot.create_color_dot_map("TURQUOISE");
@@ -300,10 +334,17 @@ impl Component for AnimationCanvas {
         });
 
         let comp_ctx = ctx.link().clone();
-        let callback =
-            Closure::wrap(Box::new(move || comp_ctx.send_message(Msg::Render)) as Box<dyn FnMut()>);
+        let callback = Closure::wrap(
+            Box::new(move || comp_ctx.send_message(Msg::MainLoop)) as Box<dyn FnMut()>
+        );
         Self {
             canvas: NodeRef::default(),
+            player: Player {
+                width: 0.,
+                height: 0.,
+                pos: Vec2 { x: 0., y: 0. },
+                image: None,
+            },
             enemy_manage: EnemyManage {
                 left_border: 50.,
                 right_border: 730.,
@@ -319,57 +360,69 @@ impl Component for AnimationCanvas {
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             // すべてのビットマップ画像取得まで繰り返す
-            Msg::RetBitmapImage(mut enemy_type_list, mut image_data_list, _image_rgb) => {
-                if let Some(enemy_type) = enemy_type_list.pop() {
+            Msg::RetBitmapImage(mut image_type_list, mut image_data_list, _image_rgb) => {
+                if let Some(image_type) = image_type_list.pop() {
                     let image_data = image_data_list
-                        .remove(&enemy_type)
+                        .remove(&image_type)
                         .expect("ドットデータが読み込まれていないキャラクターがいます。");
                     ctx.link().send_future(async {
                         let image_bitmap = imagedata2bitmap(image_data).await.unwrap();
                         Msg::RegisterImage(
-                            enemy_type_list,
+                            image_type_list,
                             image_data_list,
                             _image_rgb,
-                            (enemy_type, image_bitmap),
+                            (image_type, image_bitmap),
                         )
                     });
                     true
                 } else {
                     // すべての種類のキャラクター画像取得完了
-                    ctx.link().send_message(Msg::RegisterCharacter);
+                    ctx.link().send_message(Msg::Initialize);
                     true
                 }
             }
             // 生成したビットマップ画像を保存
             Msg::RegisterImage(
-                enemy_type_list,
+                image_type_list,
                 image_data_list,
                 _image_rgb,
-                (enemy_type, image_bitmap),
+                (image_type, image_bitmap),
             ) => {
-                self.enemy_manage
-                    .images_list
-                    .insert(enemy_type, image_bitmap);
+                if image_type == ImageType::Player {
+                    self.player.image = Some(image_bitmap);
+                } else {
+                    self.enemy_manage
+                        .images_list
+                        .insert(image_type, image_bitmap);
+                }
 
                 ctx.link().send_message(Msg::RetBitmapImage(
-                    enemy_type_list,
+                    image_type_list,
                     image_data_list,
                     _image_rgb,
                 ));
                 true
             }
-            // 敵キャラクターを生成
-            Msg::RegisterCharacter => {
+            // 初期化
+            Msg::Initialize => {
                 let canvas: HtmlCanvasElement = self.canvas.cast().unwrap();
-                let canvas_height = canvas.height() as f64;
+                let (canvas_width, canvas_height) = (canvas.width() as f64, canvas.height() as f64);
                 self.enemy_manage.register_enemys(canvas_height);
 
-                ctx.link().send_message(Msg::Render);
+                let image_player = self.player.image.clone().unwrap();
+                self.player = Player {
+                    width: image_player.width() as f64 * 3.,
+                    height: image_player.height() as f64 * 3.,
+                    pos: Vec2::new(canvas_width / 2., canvas_height - 120.),
+                    image: Some(image_player),
+                };
+
+                ctx.link().send_message(Msg::MainLoop);
                 true
             }
             // 描画処理
-            Msg::Render => {
-                self.render();
+            Msg::MainLoop => {
+                self.main_loop();
                 false
             }
         }
@@ -390,7 +443,7 @@ impl Component for AnimationCanvas {
 }
 
 impl AnimationCanvas {
-    fn render(&mut self) {
+    fn main_loop(&mut self) {
         let canvas: HtmlCanvasElement = self.canvas.cast().unwrap();
         let ctx: CanvasRenderingContext2d =
             canvas.get_context("2d").unwrap().unwrap().unchecked_into();
@@ -401,6 +454,9 @@ impl AnimationCanvas {
         ctx.fill_rect(0.0, 0.0, canvas.width().into(), canvas.height().into());
         // 画像のぼやけを防ぐ
         ctx.set_image_smoothing_enabled(false);
+
+        self.player.update();
+        self.player.render(&ctx);
 
         self.enemy_manage.update();
         self.enemy_manage.render(&ctx);
