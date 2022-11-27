@@ -19,13 +19,20 @@ impl Vec2 {
     }
 }
 struct Enemy {
-    width: f64,  // 描画サイズの幅 [pixel]
-    height: f64, // 描画サイズの高さ [pixel]
-    pos: Vec2,   // 中心位置
+    width: f64,      // 描画サイズの幅 [pixel]
+    height: f64,     // 描画サイズの高さ [pixel]
+    pos: Vec2,       // 中心位置
+    move_turn: bool, // 動くか否か
     image: ImageBitmap,
 }
 
 impl Enemy {
+    fn update(&mut self) {
+        if self.move_turn {
+            self.pos.x += 30.;
+        }
+    }
+
     fn render(&self, ctx: &CanvasRenderingContext2d) {
         ctx.draw_image_with_image_bitmap_and_dw_and_dh(
             &self.image,
@@ -81,6 +88,7 @@ impl EnemyManage {
                     width: image.width() as f64 * 3.,
                     height: image.height() as f64 * 3.,
                     pos: invader_pos,
+                    move_turn: false,
                     image: image.clone(),
                 });
                 invader_pos.x += 50.;
@@ -96,6 +104,7 @@ impl EnemyManage {
                     width: image.width() as f64 * 3.,
                     height: image.height() as f64 * 3.,
                     pos: invader_pos,
+                    move_turn: false,
                     image: image.clone(),
                 });
                 invader_pos.x += 50.;
@@ -110,9 +119,35 @@ impl EnemyManage {
                 width: image.width() as f64 * 3.,
                 height: image.height() as f64 * 3.,
                 pos: invader_pos,
+                move_turn: false,
                 image: image.clone(),
             });
             invader_pos.x += 50.;
+        }
+
+        // 一番左下の敵インベーダーから動く
+        self.enemys_list[0].move_turn = true;
+    }
+    fn update(&mut self) {
+        // 移動した敵インベーダーの個体番号を取得
+        let mut move_enemy_index = 0;
+        for (index, enemy) in self.enemys_list.iter().enumerate() {
+            if enemy.move_turn {
+                move_enemy_index = index;
+                break;
+            }
+        }
+
+        // 移動する個体を変える
+        self.enemys_list[move_enemy_index].move_turn = false;
+
+        move_enemy_index += 1;
+        if move_enemy_index >= self.enemys_list.len() {
+            // 最後の個体だったら、最初の個体に戻る
+            self.enemys_list[0].move_turn = true;
+        } else {
+            // 次の個体を動かす
+            self.enemys_list[move_enemy_index].move_turn = true;
         }
     }
 }
@@ -266,9 +301,12 @@ impl AnimationCanvas {
         ctx.fill_rect(0.0, 0.0, canvas.width().into(), canvas.height().into());
         // 画像のぼやけを防ぐ
         ctx.set_image_smoothing_enabled(false);
+
         self.enemy_manage.enemys_list.iter_mut().for_each(|enemy| {
+            enemy.update();
             enemy.render(&ctx);
         });
+        self.enemy_manage.update();
 
         log::info!(
             "canvas width() = {}, canvas height() = {}",
