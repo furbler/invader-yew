@@ -1,4 +1,5 @@
-use crate::dot_data::dot_data;
+use std::collections::HashMap;
+
 use wasm_bindgen::Clamped;
 use wasm_bindgen::{prelude::Closure, JsCast, JsValue};
 use web_sys::{window, ImageBitmap, ImageData};
@@ -7,6 +8,7 @@ use yew::prelude::*;
 
 mod dot_data;
 
+#[derive(Clone, Copy)]
 struct Vec2 {
     x: f64,
     y: f64,
@@ -16,13 +18,6 @@ impl Vec2 {
         Self { x, y }
     }
 }
-
-pub enum Msg {
-    OneImageOk(Vec<ImageData>, Vec<Vec<u8>>),
-    Register(ImageBitmap, Vec<ImageData>, Vec<Vec<u8>>),
-    Render,
-}
-
 struct Enemy {
     width: f64,  // 描画サイズの幅 [pixel]
     height: f64, // 描画サイズの高さ [pixel]
@@ -43,9 +38,88 @@ impl Enemy {
     }
 }
 
+pub enum Msg {
+    // ビットマップ画像を取得
+    RetBitmapImage(Vec<EnemyType>, HashMap<EnemyType, ImageData>, Vec<Vec<u8>>),
+    // ビットマップ画像を保存
+    RegisterImage(
+        Vec<EnemyType>,
+        HashMap<EnemyType, ImageData>,
+        Vec<Vec<u8>>,
+        (EnemyType, ImageBitmap),
+    ),
+    RegisterCharacter,
+    Render,
+}
+#[derive(Eq, Hash, PartialEq, Clone)]
+pub enum EnemyType {
+    Crab,
+    Octopus,
+    Squid,
+}
+
+impl EnemyType {
+    fn ret_all_types() -> Vec<EnemyType> {
+        vec![EnemyType::Crab, EnemyType::Octopus, EnemyType::Squid]
+    }
+}
+
+struct EnemyManage {
+    images_list: HashMap<EnemyType, ImageBitmap>,
+    enemys_list: Vec<Enemy>,
+}
+
+impl EnemyManage {
+    fn register_enemys(&mut self, canvas_height: f64) {
+        let image = self.images_list.get(&EnemyType::Octopus).unwrap();
+        let invader_column = 11;
+
+        let mut invader_pos = Vec2::new(100., canvas_height - 300.);
+        for _ in 0..2 {
+            for _ in 0..invader_column {
+                self.enemys_list.push(Enemy {
+                    width: image.width() as f64 * 3.,
+                    height: image.height() as f64 * 3.,
+                    pos: invader_pos,
+                    image: image.clone(),
+                });
+                invader_pos.x += 50.;
+            }
+            invader_pos.x = 100.;
+            invader_pos.y -= 50.;
+        }
+
+        let image = self.images_list.get(&EnemyType::Crab).unwrap();
+        for _ in 0..2 {
+            for _ in 0..invader_column {
+                self.enemys_list.push(Enemy {
+                    width: image.width() as f64 * 3.,
+                    height: image.height() as f64 * 3.,
+                    pos: invader_pos,
+                    image: image.clone(),
+                });
+                invader_pos.x += 50.;
+            }
+            invader_pos.x = 100.;
+            invader_pos.y -= 50.;
+        }
+
+        let image = self.images_list.get(&EnemyType::Squid).unwrap();
+        for _ in 0..invader_column {
+            self.enemys_list.push(Enemy {
+                width: image.width() as f64 * 3.,
+                height: image.height() as f64 * 3.,
+                pos: invader_pos,
+                image: image.clone(),
+            });
+            invader_pos.x += 50.;
+        }
+    }
+}
+
 struct AnimationCanvas {
     canvas: NodeRef,
-    enemys_list: Vec<Enemy>,
+    enemy_manage: EnemyManage,
     callback: Closure<dyn FnMut()>,
 }
 
@@ -53,10 +127,11 @@ impl Component for AnimationCanvas {
     type Properties = ();
     type Message = Msg;
     fn create(ctx: &Context<Self>) -> Self {
-        let mut image_data_list = Vec::new();
+        let mut image_data_list: HashMap<EnemyType, ImageData> = HashMap::new();
+        // ダングリング防止のため、対応するImageDataがある間は保存する
         let mut image_rgb_list = Vec::new();
 
-        let image_dot = dot_data("crab_banzai");
+        let image_dot = dot_data::ret_dot_data("crab_banzai");
         let image_rgba = image_dot.create_color_dot_map("TURQUOISE");
         let image_data = ImageData::new_with_u8_clamped_array_and_sh(
             Clamped(&image_rgba),
@@ -64,10 +139,10 @@ impl Component for AnimationCanvas {
             image_dot.height,
         )
         .unwrap();
-        image_data_list.push(image_data);
+        image_data_list.insert(EnemyType::Crab, image_data);
         image_rgb_list.push(image_rgba);
 
-        let image_dot = dot_data("octopus_open");
+        let image_dot = dot_data::ret_dot_data("octopus_open");
         let image_rgba = image_dot.create_color_dot_map("PURPLE");
         let image_data = ImageData::new_with_u8_clamped_array_and_sh(
             Clamped(&image_rgba),
@@ -75,10 +150,10 @@ impl Component for AnimationCanvas {
             image_dot.height,
         )
         .unwrap();
-        image_data_list.push(image_data);
+        image_data_list.insert(EnemyType::Octopus, image_data);
         image_rgb_list.push(image_rgba);
 
-        let image_dot = dot_data("squid_open");
+        let image_dot = dot_data::ret_dot_data("squid_open");
         let image_rgba = image_dot.create_color_dot_map("GREEN");
         let image_data = ImageData::new_with_u8_clamped_array_and_sh(
             Clamped(&image_rgba),
@@ -86,46 +161,75 @@ impl Component for AnimationCanvas {
             image_dot.height,
         )
         .unwrap();
-        image_data_list.push(image_data);
+        image_data_list.insert(EnemyType::Squid, image_data);
         image_rgb_list.push(image_rgba);
 
-        ctx.link()
-            .send_future(async { Msg::OneImageOk(image_data_list, image_rgb_list) });
+        ctx.link().send_future(async {
+            Msg::RetBitmapImage(EnemyType::ret_all_types(), image_data_list, image_rgb_list)
+        });
 
         let comp_ctx = ctx.link().clone();
         let callback =
             Closure::wrap(Box::new(move || comp_ctx.send_message(Msg::Render)) as Box<dyn FnMut()>);
         Self {
             canvas: NodeRef::default(),
-            enemys_list: vec![],
+            enemy_manage: EnemyManage {
+                images_list: HashMap::new(),
+                enemys_list: Vec::new(),
+            },
             callback,
         }
     }
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            // 1枚のビットマップ画像取得完了
-            Msg::OneImageOk(mut image_data_list, _image_rgb) => {
-                if let Some(image_data) = image_data_list.pop() {
+            // すべてのビットマップ画像取得まで繰り返す
+            Msg::RetBitmapImage(mut enemy_type_list, mut image_data_list, _image_rgb) => {
+                if let Some(enemy_type) = enemy_type_list.pop() {
+                    let image_data = image_data_list
+                        .remove(&enemy_type)
+                        .expect("ドットデータが読み込まれていないキャラクターがいます。");
                     ctx.link().send_future(async {
                         let image_bitmap = imagedata2bitmap(image_data).await.unwrap();
-                        Msg::Register(image_bitmap, image_data_list, _image_rgb)
+                        Msg::RegisterImage(
+                            enemy_type_list,
+                            image_data_list,
+                            _image_rgb,
+                            (enemy_type, image_bitmap),
+                        )
                     });
                     true
                 } else {
-                    ctx.link().send_message(Msg::Render);
+                    // すべての種類のキャラクター画像取得完了
+                    ctx.link().send_message(Msg::RegisterCharacter);
                     true
                 }
             }
-            Msg::Register(image_bitmap, image_data_list, image_rgb) => {
-                self.enemys_list.push(Enemy {
-                    width: image_bitmap.width() as f64 * 3.,
-                    height: image_bitmap.height() as f64 * 3.,
-                    pos: Vec2::new(200. + 50. * image_data_list.len() as f64, 50.),
-                    image: image_bitmap,
-                });
-                ctx.link()
-                    .send_message(Msg::OneImageOk(image_data_list, image_rgb));
+            // 生成したビットマップ画像を保存
+            Msg::RegisterImage(
+                enemy_type_list,
+                image_data_list,
+                _image_rgb,
+                (enemy_type, image_bitmap),
+            ) => {
+                self.enemy_manage
+                    .images_list
+                    .insert(enemy_type, image_bitmap);
+
+                ctx.link().send_message(Msg::RetBitmapImage(
+                    enemy_type_list,
+                    image_data_list,
+                    _image_rgb,
+                ));
+                true
+            }
+            // 敵キャラクターを生成
+            Msg::RegisterCharacter => {
+                let canvas: HtmlCanvasElement = self.canvas.cast().unwrap();
+                let canvas_height = canvas.height() as f64;
+                self.enemy_manage.register_enemys(canvas_height);
+
+                ctx.link().send_message(Msg::Render);
                 true
             }
             // 描画処理
@@ -142,7 +246,7 @@ impl Component for AnimationCanvas {
             // キャンバスのサイズはここで指定
                 <canvas
                     id="canvas"
-                    width="600" height="400"
+                    width="800" height="600"
                     ref={self.canvas.clone()}
                     />
             </div>
@@ -162,7 +266,7 @@ impl AnimationCanvas {
         ctx.fill_rect(0.0, 0.0, canvas.width().into(), canvas.height().into());
         // 画像のぼやけを防ぐ
         ctx.set_image_smoothing_enabled(false);
-        self.enemys_list.iter_mut().for_each(|enemy| {
+        self.enemy_manage.enemys_list.iter_mut().for_each(|enemy| {
             enemy.render(&ctx);
         });
 

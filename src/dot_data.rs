@@ -42,7 +42,7 @@ impl DotShape {
 }
 
 // ドットデータを変更する際はこの中身のみ変更する
-pub fn dot_data(name: &str) -> DotShape {
+pub fn ret_dot_data(name: &str) -> DotShape {
     let player = DotShape {
         width: 13,
         height: 8,
