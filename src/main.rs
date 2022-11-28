@@ -74,12 +74,14 @@ struct Player {
 }
 
 impl Player {
-    fn update(&mut self, input_key: &KeyDown) {
-        if input_key.left {
-            self.pos.x -= 5.;
+    fn update(&mut self, input_key: &KeyDown, canvas_width: f64) {
+        // 一回(1フレーム)の移動距離
+        let distance = 5.;
+        if input_key.left && 0. < self.pos.x - self.width / 2. - distance {
+            self.pos.x -= distance;
         }
-        if input_key.right {
-            self.pos.x += 5.;
+        if input_key.right && self.pos.x + self.width / 2. + distance < canvas_width {
+            self.pos.x += distance;
         }
     }
     fn render(&self, ctx: &CanvasRenderingContext2d) {
@@ -514,8 +516,9 @@ impl AnimationCanvas {
         ctx.set_image_smoothing_enabled(false);
 
         log::info!("key down state = {:?}", self.input_key_down);
-        // ここで実行時エラーが起きないか不安
-        self.player.update(&self.input_key_down.borrow());
+
+        self.player
+            .update(&self.input_key_down.borrow(), canvas.width() as f64);
         self.player.render(&ctx);
 
         self.enemy_manage.update();
