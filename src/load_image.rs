@@ -28,90 +28,44 @@ impl ImageType {
         ]
     }
 }
-
 pub fn image_data_collect() -> (HashMap<ImageType, ImageData>, Vec<Vec<u8>>) {
-    let mut image_data_list: HashMap<ImageType, ImageData> = HashMap::new();
+    let mut all_image_list = ImageDataList {
+        image_data_list: HashMap::new(),
+        image_rgba_list: Vec::new(),
+    };
+    all_image_list.ret_image_data("player", ImageType::Player, "TURQUOISE");
+    all_image_list.ret_image_data("crab_banzai", ImageType::CrabBanzai, "TURQUOISE");
+    all_image_list.ret_image_data("crab_down", ImageType::CrabDown, "TURQUOISE");
+    all_image_list.ret_image_data("octopus_open", ImageType::OctopusOpen, "PURPLE");
+    all_image_list.ret_image_data("octopus_close", ImageType::OctopusClose, "PURPLE");
+    all_image_list.ret_image_data("squid_open", ImageType::SquidOpen, "GREEN");
+    all_image_list.ret_image_data("squid_close", ImageType::SquidClose, "GREEN");
+    (
+        all_image_list.image_data_list,
+        all_image_list.image_rgba_list,
+    )
+}
+
+struct ImageDataList {
+    image_data_list: HashMap<ImageType, ImageData>,
     // ダングリング防止のため、対応するImageDataがある間は保存する
-    let mut image_rgb_list = Vec::new();
+    image_rgba_list: Vec<Vec<u8>>,
+}
 
-    let image_dot = dot_data::ret_dot_data("player");
-    let image_rgba = image_dot.create_color_dot_map("TURQUOISE");
-    let image_data = ImageData::new_with_u8_clamped_array_and_sh(
-        Clamped(&image_rgba),
-        image_dot.width,
-        image_dot.height,
-    )
-    .unwrap();
-    image_data_list.insert(ImageType::Player, image_data);
-    image_rgb_list.push(image_rgba);
+impl ImageDataList {
+    fn ret_image_data(&mut self, name: &str, image_type: ImageType, color: &str) {
+        let image_dot = dot_data::ret_dot_data(name);
+        let image_rgba = image_dot.create_color_dot_map(color);
+        let image_data = ImageData::new_with_u8_clamped_array_and_sh(
+            Clamped(&image_rgba),
+            image_dot.width,
+            image_dot.height,
+        )
+        .unwrap();
 
-    let image_dot = dot_data::ret_dot_data("crab_banzai");
-    let image_rgba = image_dot.create_color_dot_map("TURQUOISE");
-    let image_data = ImageData::new_with_u8_clamped_array_and_sh(
-        Clamped(&image_rgba),
-        image_dot.width,
-        image_dot.height,
-    )
-    .unwrap();
-    image_data_list.insert(ImageType::CrabBanzai, image_data);
-    image_rgb_list.push(image_rgba);
-
-    let image_dot = dot_data::ret_dot_data("crab_down");
-    let image_rgba = image_dot.create_color_dot_map("TURQUOISE");
-    let image_data = ImageData::new_with_u8_clamped_array_and_sh(
-        Clamped(&image_rgba),
-        image_dot.width,
-        image_dot.height,
-    )
-    .unwrap();
-    image_data_list.insert(ImageType::CrabDown, image_data);
-    image_rgb_list.push(image_rgba);
-
-    let image_dot = dot_data::ret_dot_data("octopus_open");
-    let image_rgba = image_dot.create_color_dot_map("PURPLE");
-    let image_data = ImageData::new_with_u8_clamped_array_and_sh(
-        Clamped(&image_rgba),
-        image_dot.width,
-        image_dot.height,
-    )
-    .unwrap();
-    image_data_list.insert(ImageType::OctopusOpen, image_data);
-    image_rgb_list.push(image_rgba);
-
-    let image_dot = dot_data::ret_dot_data("octopus_close");
-    let image_rgba = image_dot.create_color_dot_map("PURPLE");
-    let image_data = ImageData::new_with_u8_clamped_array_and_sh(
-        Clamped(&image_rgba),
-        image_dot.width,
-        image_dot.height,
-    )
-    .unwrap();
-    image_data_list.insert(ImageType::OctopusClose, image_data);
-    image_rgb_list.push(image_rgba);
-
-    let image_dot = dot_data::ret_dot_data("squid_open");
-    let image_rgba = image_dot.create_color_dot_map("GREEN");
-    let image_data = ImageData::new_with_u8_clamped_array_and_sh(
-        Clamped(&image_rgba),
-        image_dot.width,
-        image_dot.height,
-    )
-    .unwrap();
-    image_data_list.insert(ImageType::SquidOpen, image_data);
-    image_rgb_list.push(image_rgba);
-
-    let image_dot = dot_data::ret_dot_data("squid_close");
-    let image_rgba = image_dot.create_color_dot_map("GREEN");
-    let image_data = ImageData::new_with_u8_clamped_array_and_sh(
-        Clamped(&image_rgba),
-        image_dot.width,
-        image_dot.height,
-    )
-    .unwrap();
-    image_data_list.insert(ImageType::SquidClose, image_data);
-    image_rgb_list.push(image_rgba);
-
-    (image_data_list, image_rgb_list)
+        self.image_data_list.insert(image_type, image_data);
+        self.image_rgba_list.push(image_rgba);
+    }
 }
 
 // ImageData画像をImageBitmap画像に変換
