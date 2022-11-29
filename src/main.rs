@@ -106,6 +106,12 @@ impl Component for AnimationCanvas {
                 match image_type {
                     ImageType::PlayerFront => self.player.image_front = Some(image_bitmap),
                     ImageType::PlayerShadow => self.player.image_shadow = Some(image_bitmap),
+                    ImageType::PlayerBulletFront => {
+                        self.player.bullet.image_front = Some(image_bitmap)
+                    }
+                    ImageType::PlayerBulletShadow => {
+                        self.player.bullet.image_shadow = Some(image_bitmap)
+                    }
                     _ => {
                         self.enemy_manage
                             .images_list
@@ -130,6 +136,8 @@ impl Component for AnimationCanvas {
                     Vec2::new(canvas_width / 2., canvas_height - 90.),
                     self.player.image_front.clone().unwrap(),
                     self.player.image_shadow.clone().unwrap(),
+                    self.player.bullet.image_front.clone().unwrap(),
+                    self.player.bullet.image_shadow.clone().unwrap(),
                 );
                 // キー入力情報初期化
                 input::input_setup(&self.input_key_down);
@@ -169,8 +177,7 @@ impl AnimationCanvas {
         ctx.set_global_alpha(1.);
         // 画面全体の初期化
         if self.need_to_screen_init {
-            // 描画確認のため背景はグレーにしておく
-            ctx.set_fill_style(&JsValue::from("rgb(100,100,100)"));
+            ctx.set_fill_style(&JsValue::from("rgb(0,0,0)"));
             ctx.fill_rect(0.0, 0.0, canvas.width().into(), canvas.height().into());
             // プレイヤーの下に赤線を描く
             ctx.set_stroke_style(&JsValue::from("red"));
@@ -189,7 +196,7 @@ impl AnimationCanvas {
         log::info!("key down state = {:?}", self.input_key_down);
         // プレイヤーの処理
         self.player
-            .update(&self.input_key_down.borrow(), canvas_width);
+            .update(&ctx, &self.input_key_down.borrow(), canvas_width);
         self.player.render(&ctx);
         // 敵インベーダーの処理
         self.enemy_manage.update();

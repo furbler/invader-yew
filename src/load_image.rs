@@ -13,6 +13,7 @@ pub enum ImageType {
     CrabDownFront,
     SquidOpenFront,
     SquidCloseFront,
+    PlayerBulletFront,
 
     PlayerShadow,
     OctopusOpenShadow,
@@ -21,6 +22,7 @@ pub enum ImageType {
     CrabDownShadow,
     SquidOpenShadow,
     SquidCloseShadow,
+    PlayerBulletShadow,
 }
 // すべての画像タイプをまとめて返す
 impl ImageType {
@@ -33,6 +35,7 @@ impl ImageType {
             ImageType::OctopusCloseFront,
             ImageType::SquidOpenFront,
             ImageType::SquidCloseFront,
+            ImageType::PlayerBulletFront,
             ImageType::PlayerShadow,
             ImageType::CrabBanzaiShadow,
             ImageType::CrabDownShadow,
@@ -40,6 +43,7 @@ impl ImageType {
             ImageType::OctopusCloseShadow,
             ImageType::SquidOpenShadow,
             ImageType::SquidCloseShadow,
+            ImageType::PlayerBulletShadow,
         ]
     }
 }
@@ -56,6 +60,7 @@ pub fn image_data_collect() -> (HashMap<ImageType, ImageData>, Vec<Vec<u8>>) {
     all_image_list.ret_image_data("octopus_close", ImageType::OctopusCloseFront, "PURPLE");
     all_image_list.ret_image_data("squid_open", ImageType::SquidOpenFront, "GREEN");
     all_image_list.ret_image_data("squid_close", ImageType::SquidCloseFront, "GREEN");
+    all_image_list.ret_image_data("player_bullet", ImageType::PlayerBulletFront, "TURQUOISE");
 
     all_image_list.ret_image_data("player", ImageType::PlayerShadow, "BACKGROUND");
     all_image_list.ret_image_data("crab_banzai", ImageType::CrabBanzaiShadow, "BACKGROUND");
@@ -64,6 +69,7 @@ pub fn image_data_collect() -> (HashMap<ImageType, ImageData>, Vec<Vec<u8>>) {
     all_image_list.ret_image_data("octopus_close", ImageType::OctopusCloseShadow, "BACKGROUND");
     all_image_list.ret_image_data("squid_open", ImageType::SquidOpenShadow, "BACKGROUND");
     all_image_list.ret_image_data("squid_close", ImageType::SquidCloseShadow, "BACKGROUND");
+    all_image_list.ret_image_data("player_bullet", ImageType::PlayerBulletShadow, "BACKGROUND");
     (
         all_image_list.image_data_list,
         all_image_list.image_rgba_list,
