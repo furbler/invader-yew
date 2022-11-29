@@ -6,10 +6,11 @@ use web_sys::ImageBitmap;
 pub struct Bullet {
     width: f64,                            // 描画サイズの幅 [pixel]
     height: f64,                           // 描画サイズの高さ [pixel]
-    pos: Vec2,                             // 移動後の中心位置
-    pre_pos: Vec2,                         // 前回描画時の中心位置
-    live: bool,                            // 弾が画面中に存在しているか否か
-    pub image_front: Option<ImageBitmap>,  // 表画像
+    pub pos: Vec2,                         // 移動後の中心位置
+    pub pre_pos: Vec2,                     // 前回描画時の中心位置
+    pub live: bool,                        // 弾が画面中に存在しているか否か
+    pub remove: Option<Vec2>, // 削除する際に残った描画を消す処理が必要であればSome(位置)で表す
+    pub image_front: Option<ImageBitmap>, // 表画像
     pub image_shadow: Option<ImageBitmap>, // 影画像
 }
 impl Bullet {
@@ -20,6 +21,7 @@ impl Bullet {
             pos: Vec2::new(0., 0.),
             pre_pos: Vec2::new(0., 0.),
             live: false,
+            remove: None,
             image_front: None,
             image_shadow: None,
         }
@@ -31,25 +33,24 @@ impl Bullet {
             pos: Vec2::new(0., 0.),
             pre_pos: Vec2::new(0., 0.),
             live: false,
+            remove: None,
             image_front: Some(image_front),
             image_shadow: Some(image_shadow),
         }
     }
-    // 弾を消す
-    fn remove(&mut self, ctx: &CanvasRenderingContext2d) {
-        self.live = false;
-        // 影画像(前回の部分を消す)
-        ctx.draw_image_with_image_bitmap_and_dw_and_dh(
-            &self.image_shadow.as_ref().unwrap(),
-            self.pre_pos.x - self.width / 2.,
-            self.pre_pos.y - self.height / 2.,
-            self.width,
-            self.height,
-        )
-        .unwrap();
-    }
-
     fn render(&mut self, ctx: &CanvasRenderingContext2d) {
+        if let Some(pos) = self.remove {
+            // 影画像(最後に残った部分を消す)
+            ctx.draw_image_with_image_bitmap_and_dw_and_dh(
+                &self.image_shadow.as_ref().unwrap(),
+                pos.x - self.width / 2.,
+                pos.y - self.height / 2.,
+                self.width,
+                self.height,
+            )
+            .unwrap();
+            self.remove = None;
+        }
         // プレイヤーの弾が画面上に存在する時のみ描画する
         if self.live {
             // 影画像(前回の部分を消す)
@@ -115,14 +116,10 @@ impl Player {
             bullet: Bullet::new_image(image_bullet_front, image_bullet_shadow),
         }
     }
-    pub fn update(
-        &mut self,
-        ctx: &CanvasRenderingContext2d,
-        input_key: &KeyDown,
-        canvas_width: f64,
-    ) {
+    // 返り値は、画面上にプレイヤーの弾が存在すればSome(弾の先端座標)、無ければNoneを返す
+    pub fn update(&mut self, input_key: &KeyDown, canvas_width: f64) -> Option<Vec2> {
         // 一回(1フレーム)の移動距離
-        let distance = 5.;
+        let distance = 3.5;
         if input_key.left && 0. < self.pos.x - self.width / 2. - distance {
             self.pos.x -= distance;
         }
@@ -137,7 +134,8 @@ impl Player {
             // 弾が画面上の外側に行ったら
             if self.bullet.pos.y < 0. {
                 // 弾を消す
-                self.bullet.remove(ctx);
+                self.bullet.live = false;
+                self.bullet.remove = Some(self.bullet.pre_pos);
             }
         }
         // 発射ボタンが押されている場合
@@ -149,6 +147,12 @@ impl Player {
                 self.bullet.pos.y = self.pos.y - self.height;
                 self.bullet.live = true;
             }
+        }
+
+        if self.bullet.live {
+            Some(self.bullet.pos)
+        } else {
+            None
         }
     }
     pub fn render(&mut self, ctx: &CanvasRenderingContext2d) {

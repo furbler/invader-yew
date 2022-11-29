@@ -9,7 +9,9 @@ struct Enemy {
     height: f64,           // 描画サイズの高さ [pixel]
     pos: Vec2,             // 移動後の中心位置
     pre_pos: Vec2,         // 前回描画時の中心位置
-    move_turn: bool,       // 動くか否か
+    move_turn: bool,       // 動く順番がきたら真
+    live: bool,            // 生死
+    remove: bool,          // 削除時に残った描画処理の必用がある場合真
     show_image_type: bool, // どちらの状態の画像を表示するか
     // 表画像
     image_type1_front: ImageBitmap,
@@ -20,20 +22,59 @@ struct Enemy {
 }
 
 impl Enemy {
-    fn update(&mut self, move_dir: i32) {
-        if !self.move_turn {
-            // 動く時以外は何もしない
+    fn update(&mut self, move_dir: i32, player_bullet: &mut crate::player::Bullet) {
+        if !self.live {
+            // 死んでいたら何もしない
             return;
         }
-        // 方向を考慮して動く
-        self.pos.x += 10. * move_dir as f64;
-        // 表示する画像を切り替える
-        self.show_image_type = !self.show_image_type
+        // プレイヤーの弾が画面上に存在して
+        if player_bullet.live {
+            // 自身と衝突していた場合
+            if player_bullet
+                .pos
+                .collision(&self.pos, self.width, self.height)
+            {
+                // 自分を削除
+                self.live = false;
+                self.remove = true;
+                // プレイヤーの弾も削除
+                player_bullet.live = false;
+                player_bullet.remove = Some(player_bullet.pre_pos);
+            }
+        }
+        // 動く時
+        if self.move_turn {
+            // 方向を考慮して動く
+            self.pos.x += 10. * move_dir as f64;
+            // 表示する画像を切り替える
+            self.show_image_type = !self.show_image_type
+        }
     }
 
     fn render(&mut self, ctx: &CanvasRenderingContext2d) {
-        if !self.move_turn {
-            // 動く時以外は描画しない
+        // 削除処理
+        if self.remove {
+            // 影の方は常に表画像と逆(動く時必ず画像タイプが切り替わるため)
+            let show_image_shadow = if self.show_image_type {
+                &self.image_type2_shadow
+            } else {
+                &self.image_type1_shadow
+            };
+            // 影画像(前回の部分を消す)
+            ctx.draw_image_with_image_bitmap_and_dw_and_dh(
+                show_image_shadow,
+                self.pre_pos.x - self.width / 2.,
+                self.pre_pos.y - self.height / 2.,
+                self.width,
+                self.height,
+            )
+            .unwrap();
+            // 削除処理完了
+            self.remove = false;
+        }
+
+        // 動く時以外または死んでいる場合は描画しない
+        if !self.move_turn || !self.live {
             return;
         }
         // 表示画像選択
@@ -113,6 +154,8 @@ impl EnemyManage {
                     pos: invader_pos,
                     pre_pos: invader_pos,
                     move_turn: false,
+                    live: true,
+                    remove: false,
                     show_image_type: true,
                     image_type1_front: image_type1_front.clone(),
                     image_type2_front: image_type2_front.clone(),
@@ -138,6 +181,8 @@ impl EnemyManage {
                     pos: invader_pos,
                     pre_pos: invader_pos,
                     move_turn: false,
+                    live: true,
+                    remove: false,
                     show_image_type: true,
                     image_type1_front: image_type1_front.clone(),
                     image_type2_front: image_type2_front.clone(),
@@ -161,6 +206,8 @@ impl EnemyManage {
                 pos: invader_pos,
                 pre_pos: invader_pos,
                 move_turn: false,
+                live: true,
+                remove: false,
                 show_image_type: true,
                 image_type1_front: image_type1_front.clone(),
                 image_type2_front: image_type2_front.clone(),
@@ -174,35 +221,39 @@ impl EnemyManage {
         self.enemys_list[0].move_turn = true;
     }
 
-    pub fn update(&mut self) {
+    pub fn update(&mut self, player_bullet: &mut crate::player::Bullet) {
         // 各敵個体の移動処理
         self.enemys_list.iter_mut().for_each(|enemy| {
-            enemy.update(self.move_dir);
+            enemy.update(self.move_dir, player_bullet);
         });
 
         // 移動した敵インベーダーの個体番号を取得
-        let mut move_enemy_index = 0;
+        let mut moved_enemy_index = 0;
         for (index, enemy) in self.enemys_list.iter().enumerate() {
             if enemy.move_turn {
-                move_enemy_index = index;
+                moved_enemy_index = index;
                 break;
             }
         }
         // 動いた個体が制限範囲外に出た場合
-        if self.enemys_list[move_enemy_index].pos.x < self.left_border
-            || self.right_border < self.enemys_list[move_enemy_index].pos.x
+        if self.enemys_list[moved_enemy_index].pos.x < self.left_border
+            || self.right_border < self.enemys_list[moved_enemy_index].pos.x
         {
             // 移動方向反転フラグを立てる
             self.move_dir_invert = true;
         }
-
         // 移動する個体を変える
-        self.enemys_list[move_enemy_index].move_turn = false;
+        self.enemys_list[moved_enemy_index].move_turn = false;
 
-        move_enemy_index += 1;
-        if move_enemy_index >= self.enemys_list.len() {
-            // 最後の個体だったら、最初の個体に戻る
-            self.enemys_list[0].move_turn = true;
+        let mut next_move_enemy_index = None;
+        for index in (moved_enemy_index + 1)..self.enemys_list.len() {
+            if self.enemys_list[index].live {
+                next_move_enemy_index = Some(index);
+                break;
+            }
+        }
+        // 動いた個体より後がすべて死んでいた場合
+        if next_move_enemy_index == None {
             // 移動方向反転フラグが立っている場合
             if self.move_dir_invert {
                 // 移動方向を反転
@@ -210,9 +261,19 @@ impl EnemyManage {
                 // 移動方向反転フラグをリセット
                 self.move_dir_invert = false;
             }
+            // もう一週生きている個体を探す
+            for (index, enemy) in self.enemys_list.iter().enumerate() {
+                if enemy.live {
+                    next_move_enemy_index = Some(index);
+                    break;
+                }
+            }
+        }
+        if let Some(i) = next_move_enemy_index {
+            // 次に動く敵個体を指定
+            self.enemys_list[i].move_turn = true;
         } else {
-            // 次の個体を動かす
-            self.enemys_list[move_enemy_index].move_turn = true;
+            log::info!("敵は全滅した。");
         }
     }
     pub fn render(&mut self, ctx: &CanvasRenderingContext2d) {

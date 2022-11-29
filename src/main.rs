@@ -193,13 +193,13 @@ impl AnimationCanvas {
         // 画像のぼやけを防ぐ
         ctx.set_image_smoothing_enabled(false);
 
-        log::info!("key down state = {:?}", self.input_key_down);
         // プレイヤーの処理
         self.player
-            .update(&ctx, &self.input_key_down.borrow(), canvas_width);
-        self.player.render(&ctx);
+            .update(&self.input_key_down.borrow(), canvas_width);
         // 敵インベーダーの処理
-        self.enemy_manage.update();
+        self.enemy_manage.update(&mut self.player.bullet);
+
+        self.player.render(&ctx);
         self.enemy_manage.render(&ctx);
 
         window()
