@@ -38,6 +38,7 @@ struct AnimationCanvas {
     enemy_manage: EnemyManage,
     callback: Closure<dyn FnMut()>,
     input_key_down: Rc<RefCell<input::KeyDown>>,
+    need_to_screen_init: bool, // 真ならば画面全体の初期化が必要
 }
 
 impl Component for AnimationCanvas {
@@ -57,8 +58,8 @@ impl Component for AnimationCanvas {
         );
         Self {
             canvas: NodeRef::default(),
-            // まだ画像読み込みをしていないため、仮の値を入れる
-            player: Player::default(),
+            // まだ画像が未取得なので、仮の値を入れる
+            player: Player::empty(),
             enemy_manage: EnemyManage::default(),
             callback,
             input_key_down: Rc::new(RefCell::new(input::KeyDown {
@@ -66,6 +67,7 @@ impl Component for AnimationCanvas {
                 right: false,
                 shot: false,
             })),
+            need_to_screen_init: true,
         }
     }
 
@@ -101,12 +103,14 @@ impl Component for AnimationCanvas {
                 _image_rgb,
                 (image_type, image_bitmap),
             ) => {
-                if image_type == ImageType::Player {
-                    self.player.image = Some(image_bitmap);
-                } else {
-                    self.enemy_manage
-                        .images_list
-                        .insert(image_type, image_bitmap);
+                match image_type {
+                    ImageType::PlayerFront => self.player.image_front = Some(image_bitmap),
+                    ImageType::PlayerShadow => self.player.image_shadow = Some(image_bitmap),
+                    _ => {
+                        self.enemy_manage
+                            .images_list
+                            .insert(image_type, image_bitmap);
+                    }
                 }
                 ctx.link().send_message(Msg::RetBitmapImage(
                     remain_image_type_list,
@@ -123,10 +127,11 @@ impl Component for AnimationCanvas {
                 self.enemy_manage.register_enemys(canvas_height);
                 // プレイヤーの初期化
                 self.player = Player::new(
-                    Vec2::new(canvas_width / 2., canvas_height - 120.),
-                    self.player.image.clone().unwrap(),
+                    Vec2::new(canvas_width / 2., canvas_height - 90.),
+                    self.player.image_front.clone().unwrap(),
+                    self.player.image_shadow.clone().unwrap(),
                 );
-
+                // キー入力情報初期化
                 input::input_setup(&self.input_key_down);
 
                 ctx.link().send_message(Msg::MainLoop);
@@ -159,18 +164,32 @@ impl AnimationCanvas {
         let canvas: HtmlCanvasElement = self.canvas.cast().unwrap();
         let ctx: CanvasRenderingContext2d =
             canvas.get_context("2d").unwrap().unwrap().unchecked_into();
+        let (canvas_width, canvas_height) = (canvas.width() as f64, canvas.height() as f64);
         // 画面全体クリア
         ctx.set_global_alpha(1.);
-        // 描画確認のため背景はグレーにしておく
-        ctx.set_fill_style(&JsValue::from("rgb(100,100,100)"));
-        ctx.fill_rect(0.0, 0.0, canvas.width().into(), canvas.height().into());
+        // 画面全体の初期化
+        if self.need_to_screen_init {
+            // 描画確認のため背景はグレーにしておく
+            ctx.set_fill_style(&JsValue::from("rgb(100,100,100)"));
+            ctx.fill_rect(0.0, 0.0, canvas.width().into(), canvas.height().into());
+            // プレイヤーの下に赤線を描く
+            ctx.set_stroke_style(&JsValue::from("red"));
+            ctx.set_line_width(2.);
+            ctx.begin_path();
+            ctx.move_to(10., canvas_height - 40.);
+            ctx.line_to(canvas_width - 10., canvas_height - 40.);
+            ctx.stroke();
+
+            // 初期化は最初のみ
+            self.need_to_screen_init = false;
+        }
         // 画像のぼやけを防ぐ
         ctx.set_image_smoothing_enabled(false);
 
         log::info!("key down state = {:?}", self.input_key_down);
         // プレイヤーの処理
         self.player
-            .update(&self.input_key_down.borrow(), canvas.width() as f64);
+            .update(&self.input_key_down.borrow(), canvas_width);
         self.player.render(&ctx);
         // 敵インベーダーの処理
         self.enemy_manage.update();
