@@ -197,7 +197,7 @@ impl AnimationCanvas {
         self.player
             .update(&self.input_key_down.borrow(), canvas_width);
         // 敵インベーダーの処理
-        self.enemy_manage.update(&mut self.player.bullet);
+        self.enemy_manage.update(&ctx, &mut self.player.bullet);
 
         self.player.render(&ctx);
         self.enemy_manage.render(&ctx);

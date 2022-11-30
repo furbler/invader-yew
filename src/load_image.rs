@@ -23,6 +23,11 @@ pub enum ImageType {
     SquidOpenShadow,
     SquidCloseShadow,
     PlayerBulletShadow,
+
+    ExplosionTurquoise,
+    ExplosionPurple,
+    ExpolsionGreen,
+    ExplosionShadow,
 }
 // すべての画像タイプをまとめて返す
 impl ImageType {
@@ -44,6 +49,10 @@ impl ImageType {
             ImageType::SquidOpenShadow,
             ImageType::SquidCloseShadow,
             ImageType::PlayerBulletShadow,
+            ImageType::ExplosionTurquoise,
+            ImageType::ExplosionPurple,
+            ImageType::ExpolsionGreen,
+            ImageType::ExplosionShadow,
         ]
     }
 }
@@ -70,6 +79,12 @@ pub fn image_data_collect() -> (HashMap<ImageType, ImageData>, Vec<Vec<u8>>) {
     all_image_list.ret_image_data("squid_open", ImageType::SquidOpenShadow, "BACKGROUND");
     all_image_list.ret_image_data("squid_close", ImageType::SquidCloseShadow, "BACKGROUND");
     all_image_list.ret_image_data("player_bullet", ImageType::PlayerBulletShadow, "BACKGROUND");
+
+    all_image_list.ret_image_data("explosion", ImageType::ExplosionTurquoise, "TURQUOISE");
+    all_image_list.ret_image_data("explosion", ImageType::ExplosionPurple, "PURPLE");
+    all_image_list.ret_image_data("explosion", ImageType::ExpolsionGreen, "GREEN");
+    all_image_list.ret_image_data("explosion", ImageType::ExplosionShadow, "BACKGROUND");
+
     (
         all_image_list.image_data_list,
         all_image_list.image_rgba_list,
