@@ -28,6 +28,8 @@ pub enum ImageType {
     ExplosionPurple,
     ExpolsionGreen,
     ExplosionShadow,
+    LandPlayerBulletFront,
+    LandPlayerBulletShadow,
 }
 // すべての画像タイプをまとめて返す
 impl ImageType {
@@ -53,6 +55,8 @@ impl ImageType {
             ImageType::ExplosionPurple,
             ImageType::ExpolsionGreen,
             ImageType::ExplosionShadow,
+            ImageType::LandPlayerBulletFront,
+            ImageType::LandPlayerBulletShadow,
         ]
     }
 }
@@ -85,6 +89,16 @@ pub fn image_data_collect() -> (HashMap<ImageType, ImageData>, Vec<Vec<u8>>) {
     all_image_list.ret_image_data("explosion", ImageType::ExpolsionGreen, "GREEN");
     all_image_list.ret_image_data("explosion", ImageType::ExplosionShadow, "BACKGROUND");
 
+    all_image_list.ret_image_data(
+        "land_player_bullet",
+        ImageType::LandPlayerBulletFront,
+        "RED",
+    );
+    all_image_list.ret_image_data(
+        "land_player_bullet",
+        ImageType::LandPlayerBulletShadow,
+        "BACKGROUND",
+    );
     (
         all_image_list.image_data_list,
         all_image_list.image_rgba_list,

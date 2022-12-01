@@ -10,9 +10,14 @@ pub struct Bullet {
     pub pre_pos: Vec2,                     // 前回描画時の中心位置
     pub live: bool,                        // 弾が画面中に存在しているか否か
     pub can_shot: bool,                    // 射撃可能ならば真
+    land_effect_cnt: Option<i32>,          // エフェクト表示の残りカウント
     pub remove: Option<Vec2>, // 削除する際に残った描画を消す処理が必要であればSome(位置)で表す
     pub image_front: Option<ImageBitmap>, // 表画像
     pub image_shadow: Option<ImageBitmap>, // 影画像
+    width_land_effect: f64,
+    height_land_effect: f64,
+    pub image_land_front: Option<ImageBitmap>, // 着弾時の表画像
+    pub image_land_shadow: Option<ImageBitmap>, // 着弾時の影画像
 }
 impl Bullet {
     fn empty() -> Self {
@@ -24,11 +29,21 @@ impl Bullet {
             live: false,
             can_shot: true,
             remove: None,
+            land_effect_cnt: None,
+            width_land_effect: 0.,
+            height_land_effect: 0.,
             image_front: None,
             image_shadow: None,
+            image_land_front: None,
+            image_land_shadow: None,
         }
     }
-    fn new_image(image_front: ImageBitmap, image_shadow: ImageBitmap) -> Self {
+    fn new_image(
+        image_front: ImageBitmap,
+        image_shadow: ImageBitmap,
+        image_land_front: ImageBitmap,
+        image_land_shadow: ImageBitmap,
+    ) -> Self {
         Bullet {
             width: image_front.width() as f64 * 3.,
             height: image_front.height() as f64 * 3.,
@@ -36,9 +51,14 @@ impl Bullet {
             pre_pos: Vec2::new(0., 0.),
             live: false,
             can_shot: true,
+            land_effect_cnt: None,
+            width_land_effect: image_land_front.width() as f64 * 2.5,
+            height_land_effect: image_land_front.height() as f64 * 2.5,
             remove: None,
             image_front: Some(image_front),
             image_shadow: Some(image_shadow),
+            image_land_front: Some(image_land_front),
+            image_land_shadow: Some(image_land_shadow),
         }
     }
     fn update(&mut self, input_key: &KeyDown, player_pos: Vec2) {
@@ -46,11 +66,11 @@ impl Bullet {
             // 弾が生きていたら更新処理を行う
             // 弾の移動処理
             self.pos.y -= 13.;
-            // 弾が画面上の外側に行ったら
-            if self.pos.y < 0. {
+            // 弾が画面上に行ったら
+            if self.pos.y < 20. {
                 // 弾を消す
                 self.live = false;
-                self.can_shot = true;
+                self.land_effect_cnt = Some(15);
                 self.remove = Some(self.pre_pos);
             }
         } else {
@@ -102,6 +122,35 @@ impl Bullet {
             .unwrap();
             self.pre_pos = self.pos;
         }
+        // 着弾エフェクトを表示するか
+        if let Some(cnt) = self.land_effect_cnt {
+            // 着弾エフェクト表示
+            ctx.draw_image_with_image_bitmap_and_dw_and_dh(
+                &self.image_land_front.as_ref().unwrap(),
+                self.pos.x - self.width / 2.,
+                self.pos.y - self.height / 2.,
+                self.width_land_effect,
+                self.height_land_effect,
+            )
+            .unwrap();
+            if cnt > 0 {
+                self.land_effect_cnt = Some(cnt - 1);
+            } else {
+                log::info!("着弾エフェクト削除A;");
+                // 着弾エフェクト削除
+                ctx.draw_image_with_image_bitmap_and_dw_and_dh(
+                    &self.image_land_shadow.as_ref().unwrap(),
+                    self.pos.x - self.width / 2.,
+                    self.pos.y - self.height / 2.,
+                    self.width_land_effect,
+                    self.height_land_effect,
+                )
+                .unwrap();
+                self.land_effect_cnt = None;
+                // 着弾エフェクトが消えてからプレイヤーの射撃可能とする
+                self.can_shot = true;
+            }
+        }
     }
 }
 
@@ -134,6 +183,8 @@ impl Player {
         image_shadow: ImageBitmap,
         image_bullet_front: ImageBitmap,
         image_bullet_shadow: ImageBitmap,
+        image_land_bullet_front: ImageBitmap,
+        image_land_bullet_shadow: ImageBitmap,
     ) -> Self {
         Player {
             width: image_front.width() as f64 * 3.,
@@ -142,7 +193,12 @@ impl Player {
             pre_pos: pos,
             image_front: Some(image_front),
             image_shadow: Some(image_shadow),
-            bullet: Bullet::new_image(image_bullet_front, image_bullet_shadow),
+            bullet: Bullet::new_image(
+                image_bullet_front,
+                image_bullet_shadow,
+                image_land_bullet_front,
+                image_land_bullet_shadow,
+            ),
         }
     }
     pub fn update(&mut self, input_key: &KeyDown, canvas_width: f64) {

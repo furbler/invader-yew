@@ -112,6 +112,12 @@ impl Component for AnimationCanvas {
                     ImageType::PlayerBulletShadow => {
                         self.player.bullet.image_shadow = Some(image_bitmap)
                     }
+                    ImageType::LandPlayerBulletFront => {
+                        self.player.bullet.image_land_front = Some(image_bitmap)
+                    }
+                    ImageType::LandPlayerBulletShadow => {
+                        self.player.bullet.image_land_shadow = Some(image_bitmap)
+                    }
                     _ => {
                         self.enemy_manage
                             .images_list
@@ -138,6 +144,8 @@ impl Component for AnimationCanvas {
                     self.player.image_shadow.clone().unwrap(),
                     self.player.bullet.image_front.clone().unwrap(),
                     self.player.bullet.image_shadow.clone().unwrap(),
+                    self.player.bullet.image_land_front.clone().unwrap(),
+                    self.player.bullet.image_land_shadow.clone().unwrap(),
                 );
                 // キー入力情報初期化
                 input::input_setup(&self.input_key_down);

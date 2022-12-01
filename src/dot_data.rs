@@ -162,6 +162,21 @@ pub fn ret_dot_data(name: &str) -> DotShape {
         ]),
     };
 
+    let land_player_bullet = DotShape {
+        width: 8,
+        height: 8,
+        dot_map: convert_dot_map(vec![
+            "# _ _ _ # _ _ #",
+            "_ _ # _ _ _ # _",
+            "_ # # # # # # _",
+            "# # # # # # # #",
+            "# # # # # # # #",
+            "_ # # # # # # _",
+            "_ _ # _ _ # _ _",
+            "# _ _ # _ _ _ #",
+        ]),
+    };
+
     match name {
         "player" => player,
         "player_bullet" => bullet_player,
@@ -172,6 +187,7 @@ pub fn ret_dot_data(name: &str) -> DotShape {
         "squid_open" => squid_open,
         "squid_close" => squid_close,
         "explosion" => explosion,
+        "land_player_bullet" => land_player_bullet,
         _ => panic!(
             "{}のドットマップ取得に失敗しました。プログラムを終了します。",
             name
@@ -203,6 +219,7 @@ fn set_color(color: &str) -> Vec<u8> {
         "TURQUOISE" => vec![68, 200, 210, 255], // 青緑色
         "PURPLE" => vec![219, 85, 221, 255],    // 紫色
         "GREEN" => vec![98, 222, 109, 255],     // 緑色
+        "RED" => vec![255, 0, 0, 255],          // 赤色
         "BACKGROUND" => vec![0, 0, 0, 255],     // 背景色
         _ => panic!("{}色には対応していません。プログラムを終了します。", color),
     }
