@@ -65,7 +65,7 @@ impl Bullet {
         if self.live {
             // 弾が生きていたら更新処理を行う
             // 弾の移動処理
-            self.pos.y -= 13.;
+            self.pos.y -= 14.;
             // 弾が画面上に行ったら
             if self.pos.y < 20. {
                 // 弾を消す
@@ -136,7 +136,6 @@ impl Bullet {
             if cnt > 0 {
                 self.land_effect_cnt = Some(cnt - 1);
             } else {
-                log::info!("着弾エフェクト削除A;");
                 // 着弾エフェクト削除
                 ctx.draw_image_with_image_bitmap_and_dw_and_dh(
                     &self.image_land_shadow.as_ref().unwrap(),

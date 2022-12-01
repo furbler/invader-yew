@@ -30,6 +30,7 @@ pub enum ImageType {
     ExplosionShadow,
     LandPlayerBulletFront,
     LandPlayerBulletShadow,
+    Torchika,
 }
 // すべての画像タイプをまとめて返す
 impl ImageType {
@@ -57,6 +58,7 @@ impl ImageType {
             ImageType::ExplosionShadow,
             ImageType::LandPlayerBulletFront,
             ImageType::LandPlayerBulletShadow,
+            ImageType::Torchika,
         ]
     }
 }
@@ -99,6 +101,9 @@ pub fn image_data_collect() -> (HashMap<ImageType, ImageData>, Vec<Vec<u8>>) {
         ImageType::LandPlayerBulletShadow,
         "BACKGROUND",
     );
+
+    all_image_list.ret_image_data("torchika", ImageType::Torchika, "RED");
+
     (
         all_image_list.image_data_list,
         all_image_list.image_rgba_list,

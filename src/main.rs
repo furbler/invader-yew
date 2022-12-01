@@ -36,6 +36,7 @@ struct AnimationCanvas {
     canvas: NodeRef,
     player: Player,
     enemy_manage: EnemyManage,
+    torchika: Option<ImageBitmap>,
     callback: Closure<dyn FnMut()>,
     input_key_down: Rc<RefCell<input::KeyDown>>,
     need_to_screen_init: bool, // 真ならば画面全体の初期化が必要
@@ -61,6 +62,7 @@ impl Component for AnimationCanvas {
             // まだ画像が未取得なので、仮の値を入れる
             player: Player::empty(),
             enemy_manage: EnemyManage::default(),
+            torchika: None,
             callback,
             input_key_down: Rc::new(RefCell::new(input::KeyDown {
                 left: false,
@@ -118,6 +120,7 @@ impl Component for AnimationCanvas {
                     ImageType::LandPlayerBulletShadow => {
                         self.player.bullet.image_land_shadow = Some(image_bitmap)
                     }
+                    ImageType::Torchika => self.torchika = Some(image_bitmap),
                     _ => {
                         self.enemy_manage
                             .images_list
@@ -188,12 +191,29 @@ impl AnimationCanvas {
             ctx.set_fill_style(&JsValue::from("rgb(0,0,0)"));
             ctx.fill_rect(0.0, 0.0, canvas.width().into(), canvas.height().into());
             // プレイヤーの下に赤線を描く
-            ctx.set_stroke_style(&JsValue::from("red"));
+            ctx.set_stroke_style(&JsValue::from("rgb(180,0,0)"));
             ctx.set_line_width(2.);
             ctx.begin_path();
             ctx.move_to(10., canvas_height - 40.);
             ctx.line_to(canvas_width - 10., canvas_height - 40.);
             ctx.stroke();
+            // トーチカの描画サイズ
+            let (torchika_width, torchika_height) = (
+                self.torchika.as_ref().unwrap().width() as f64 * 3.,
+                self.torchika.as_ref().unwrap().height() as f64 * 3.,
+            );
+            let torchika_start = canvas_width / 2. - 195.;
+            // トーチカ描画
+            for i in 0..4 {
+                ctx.draw_image_with_image_bitmap_and_dw_and_dh(
+                    &self.torchika.as_ref().unwrap(),
+                    torchika_start + 130. * i as f64 - torchika_width / 2.,
+                    canvas_height - 180.,
+                    torchika_width,
+                    torchika_height,
+                )
+                .unwrap();
+            }
 
             // 初期化は最初のみ
             self.need_to_screen_init = false;

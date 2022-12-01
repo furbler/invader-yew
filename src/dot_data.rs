@@ -2,7 +2,7 @@ use std::io::Write;
 pub struct DotShape {
     pub width: u32,              // 幅[ドット]
     pub height: u32,             // 高さ[ドット]
-    pub dot_map: Vec<Vec<bool>>, // 描画部分は#、非描画部分は_で表す
+    pub dot_map: Vec<Vec<bool>>, // 描画部分を真、透過部分を偽で表す
 }
 
 impl DotShape {
@@ -177,6 +177,28 @@ pub fn ret_dot_data(name: &str) -> DotShape {
         ]),
     };
 
+    let torchika = DotShape {
+        width: 20,
+        height: 15,
+        dot_map: convert_dot_map(vec![
+            "_ _ _ _ # # # # # # # # # # # # _ _ _ _",
+            "_ _ _ # # # # # # # # # # # # # # _ _ _",
+            "_ _ # # # # # # # # # # # # # # # # _ _",
+            "_ # # # # # # # # # # # # # # # # # # _",
+            "# # # # # # # # # # # # # # # # # # # #",
+            "# # # # # # # # # # # # # # # # # # # #",
+            "# # # # # # # # # # # # # # # # # # # #",
+            "# # # # # # # # # # # # # # # # # # # #",
+            "# # # # # # # # # # # # # # # # # # # #",
+            "# # # # # # # # # # # # # # # # # # # #",
+            "# # # # # # # # # # # # # # # # # # # #",
+            "# # # # # # # _ _ _ _ _ _ # # # # # # #",
+            "# # # # # # _ _ _ _ _ _ _ _ # # # # # #",
+            "# # # # # _ _ _ _ _ _ _ _ _ _ # # # # #",
+            "# # # # # _ _ _ _ _ _ _ _ _ _ # # # # #",
+        ]),
+    };
+
     match name {
         "player" => player,
         "player_bullet" => bullet_player,
@@ -188,6 +210,7 @@ pub fn ret_dot_data(name: &str) -> DotShape {
         "squid_close" => squid_close,
         "explosion" => explosion,
         "land_player_bullet" => land_player_bullet,
+        "torchika" => torchika,
         _ => panic!(
             "{}のドットマップ取得に失敗しました。プログラムを終了します。",
             name
@@ -219,8 +242,8 @@ fn set_color(color: &str) -> Vec<u8> {
         "TURQUOISE" => vec![68, 200, 210, 255], // 青緑色
         "PURPLE" => vec![219, 85, 221, 255],    // 紫色
         "GREEN" => vec![98, 222, 109, 255],     // 緑色
-        "RED" => vec![255, 0, 0, 255],          // 赤色
-        "BACKGROUND" => vec![0, 0, 0, 255],     // 背景色
+        "RED" => vec![210, 0, 0, 255],      // 赤色
+        "BACKGROUND" => vec![0, 0, 0, 255], // 背景色
         _ => panic!("{}色には対応していません。プログラムを終了します。", color),
     }
 }

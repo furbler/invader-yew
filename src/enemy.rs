@@ -235,6 +235,9 @@ impl EnemyManage {
             .unwrap();
 
         let invader_column = 11;
+        // 縦横の間隔
+        let gap_x = 47.;
+        let gap_y = 45.;
 
         let mut invader_pos = Vec2::new(100., canvas_height - 300.);
         for _ in 0..2 {
@@ -254,10 +257,10 @@ impl EnemyManage {
                     image_type1_shadow: image_type1_shadow.clone(),
                     image_type2_shadow: image_type2_shadow.clone(),
                 });
-                invader_pos.x += 50.;
+                invader_pos.x += gap_x;
             }
             invader_pos.x = 100.;
-            invader_pos.y -= 50.;
+            invader_pos.y -= gap_y;
         }
 
         let image_type1_front = self.images_list.get(&ImageType::CrabBanzaiFront).unwrap();
@@ -282,10 +285,10 @@ impl EnemyManage {
                     image_type1_shadow: image_type1_shadow.clone(),
                     image_type2_shadow: image_type2_shadow.clone(),
                 });
-                invader_pos.x += 50.;
+                invader_pos.x += gap_x;
             }
             invader_pos.x = 100.;
-            invader_pos.y -= 50.;
+            invader_pos.y -= gap_y;
         }
         let image_type1_front = self.images_list.get(&ImageType::SquidOpenFront).unwrap();
         let image_type2_front = self.images_list.get(&ImageType::SquidCloseFront).unwrap();
@@ -308,7 +311,7 @@ impl EnemyManage {
                 image_type1_shadow: image_type1_shadow.clone(),
                 image_type2_shadow: image_type2_shadow.clone(),
             });
-            invader_pos.x += 50.;
+            invader_pos.x += gap_x;
         }
 
         self.enemys_list[0].move_turn = true;
