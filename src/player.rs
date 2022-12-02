@@ -1,3 +1,6 @@
+use std::ops::Deref;
+
+use crate::dot_data::set_color;
 use crate::input::KeyDown;
 use crate::math::Vec2;
 use web_sys::CanvasRenderingContext2d;
@@ -61,17 +64,61 @@ impl Bullet {
             image_land_shadow: Some(image_land_shadow),
         }
     }
-    fn update(&mut self, input_key: &KeyDown, player_pos: Vec2) {
+    // 画面最上部またはトーチカへの着弾
+    fn land_obstacle(&mut self) {
+        // 弾を消す
+        self.live = false;
+        self.land_effect_cnt = Some(15);
+        self.remove = Some(self.pre_pos);
+    }
+
+    fn update(
+        &mut self,
+        ctx: &CanvasRenderingContext2d,
+        input_key: &KeyDown,
+        player_pos: Vec2,
+        canvas_width: f64,
+    ) {
         if self.live {
             // 弾が生きていたら更新処理を行う
             // 弾の移動処理
-            self.pos.y -= 14.;
+            self.pos.y -= 12.;
             // 弾が画面上に行ったら
             if self.pos.y < 20. {
-                // 弾を消す
-                self.live = false;
-                self.land_effect_cnt = Some(15);
-                self.remove = Some(self.pre_pos);
+                // 着弾処理
+                self.land_obstacle();
+            } else {
+                // トーチカへの着弾確認
+                // とりあえず弾の周りのデータまであれば十分
+                let image_data = ctx
+                    .get_image_data(0., 0., canvas_width, self.pos.y + self.height)
+                    .unwrap()
+                    .data();
+                let rgba_map = image_data.deref();
+                // 弾の中心付近の座標
+                let collision_left_pos = Vec2::new(self.pos.x - self.width / 2. - 2., self.pos.y);
+                let collision_right_pos = Vec2::new(self.pos.x + self.width / 2. + 2., self.pos.y);
+                // トーチカの色のrgba
+                let torchika_rgba = set_color("RED");
+                // 指定座標のピクセル値とトーチカのピクセル値を比較して判定
+                let i_left =
+                    (collision_left_pos.y * canvas_width + collision_left_pos.x) as usize * 4;
+                let detect_collision_left = rgba_map[i_left] == torchika_rgba[0]
+                    && rgba_map[i_left + 1] == torchika_rgba[1]
+                    && rgba_map[i_left + 2] == torchika_rgba[2]
+                    && rgba_map[i_left + 3] == torchika_rgba[3];
+
+                let i_right =
+                    (collision_right_pos.y * canvas_width + collision_right_pos.x) as usize * 4;
+                let detect_collision_right = rgba_map[i_right] == torchika_rgba[0]
+                    && rgba_map[i_right + 1] == torchika_rgba[1]
+                    && rgba_map[i_right + 2] == torchika_rgba[2]
+                    && rgba_map[i_right + 3] == torchika_rgba[3];
+
+                if detect_collision_left || detect_collision_right {
+                    // 着弾処理
+                    self.land_obstacle();
+                }
             }
         } else {
             // 弾が削除されている状態でのみ射撃可能
@@ -88,12 +135,12 @@ impl Bullet {
     }
 
     fn render(&mut self, ctx: &CanvasRenderingContext2d) {
-        if let Some(pos) = self.remove {
+        if let Some(land_pos) = self.remove {
             // 影画像(最後に残った部分を消す)
             ctx.draw_image_with_image_bitmap_and_dw_and_dh(
                 &self.image_shadow.as_ref().unwrap(),
-                pos.x - self.width / 2.,
-                pos.y - self.height / 2.,
+                land_pos.x - self.width / 2.,
+                land_pos.y - self.height / 2.,
                 self.width,
                 self.height,
             )
@@ -127,8 +174,8 @@ impl Bullet {
             // 着弾エフェクト表示
             ctx.draw_image_with_image_bitmap_and_dw_and_dh(
                 &self.image_land_front.as_ref().unwrap(),
-                self.pos.x - self.width / 2.,
-                self.pos.y - self.height / 2.,
+                self.pos.x - self.width_land_effect / 2.,
+                self.pos.y - self.height_land_effect / 2.,
                 self.width_land_effect,
                 self.height_land_effect,
             )
@@ -139,8 +186,8 @@ impl Bullet {
                 // 着弾エフェクト削除
                 ctx.draw_image_with_image_bitmap_and_dw_and_dh(
                     &self.image_land_shadow.as_ref().unwrap(),
-                    self.pos.x - self.width / 2.,
-                    self.pos.y - self.height / 2.,
+                    self.pos.x - self.width_land_effect / 2.,
+                    self.pos.y - self.height_land_effect / 2.,
                     self.width_land_effect,
                     self.height_land_effect,
                 )
@@ -200,7 +247,12 @@ impl Player {
             ),
         }
     }
-    pub fn update(&mut self, input_key: &KeyDown, canvas_width: f64) {
+    pub fn update(
+        &mut self,
+        ctx: &CanvasRenderingContext2d,
+        input_key: &KeyDown,
+        canvas_width: f64,
+    ) {
         // 一回(1フレーム)の移動距離
         let distance = 3.5;
         if input_key.left && 0. < self.pos.x - self.width / 2. - distance {
@@ -210,7 +262,7 @@ impl Player {
             self.pos.x += distance;
         }
 
-        self.bullet.update(input_key, self.pos);
+        self.bullet.update(ctx, input_key, self.pos, canvas_width);
     }
     pub fn render(&mut self, ctx: &CanvasRenderingContext2d) {
         // 影画像(前回の部分を消す)
