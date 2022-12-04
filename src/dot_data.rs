@@ -199,6 +199,20 @@ pub fn ret_dot_data(name: &str) -> DotShape {
         ]),
     };
 
+    let ufo = DotShape {
+        width: 16,
+        height: 7,
+        dot_map: convert_dot_map(vec![
+            "_ _ _ _ _ # # # # # # _ _ _ _ _",
+            "_ _ _ # # # # # # # # # # _ _ _",
+            "_ _ # # # # # # # # # # # # _ _",
+            "_ # # _ # # _ # # _ # # _ # # _",
+            "# # # # # # # # # # # # # # # #",
+            "_ _ # # # _ _ # # _ _ # # # _ _",
+            "_ _ _ # _ _ _ _ _ _ _ _ # _ _ _",
+        ]),
+    };
+
     match name {
         "player" => player,
         "player_bullet" => bullet_player,
@@ -211,6 +225,7 @@ pub fn ret_dot_data(name: &str) -> DotShape {
         "explosion" => explosion,
         "land_player_bullet" => land_player_bullet,
         "torchika" => torchika,
+        "ufo" => ufo,
         _ => panic!(
             "{}のドットマップ取得に失敗しました。プログラムを終了します。",
             name

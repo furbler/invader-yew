@@ -106,10 +106,8 @@ impl Component for AnimationCanvas {
                 (image_type, image_bitmap),
             ) => {
                 match image_type {
-                    ImageType::PlayerFront => self.player.image_front = Some(image_bitmap),
-                    ImageType::PlayerBulletFront => {
-                        self.player.bullet.image_front = Some(image_bitmap)
-                    }
+                    ImageType::Player => self.player.image_front = Some(image_bitmap),
+                    ImageType::PlayerBullet => self.player.bullet.image_front = Some(image_bitmap),
                     ImageType::LandPlayerBulletFront => {
                         self.player.bullet.image_land_front = Some(image_bitmap)
                     }

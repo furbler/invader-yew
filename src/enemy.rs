@@ -210,8 +210,8 @@ impl EnemyManage {
         }
     }
     pub fn register_enemys(&mut self, canvas_height: f64) {
-        let image_type1_front = self.images_list.get(&ImageType::OctopusOpenFront).unwrap();
-        let image_type2_front = self.images_list.get(&ImageType::OctopusCloseFront).unwrap();
+        let image_type1_front = self.images_list.get(&ImageType::OctopusOpen).unwrap();
+        let image_type2_front = self.images_list.get(&ImageType::OctopusClose).unwrap();
         let invader_column = 11;
         // 縦横の間隔
         let gap_x = 47.;
@@ -239,8 +239,8 @@ impl EnemyManage {
             invader_pos.y -= gap_y;
         }
 
-        let image_type1_front = self.images_list.get(&ImageType::CrabBanzaiFront).unwrap();
-        let image_type2_front = self.images_list.get(&ImageType::CrabDownFront).unwrap();
+        let image_type1_front = self.images_list.get(&ImageType::CrabBanzai).unwrap();
+        let image_type2_front = self.images_list.get(&ImageType::CrabDown).unwrap();
 
         for _ in 0..2 {
             for _ in 0..invader_column {
@@ -262,8 +262,8 @@ impl EnemyManage {
             invader_pos.x = 100.;
             invader_pos.y -= gap_y;
         }
-        let image_type1_front = self.images_list.get(&ImageType::SquidOpenFront).unwrap();
-        let image_type2_front = self.images_list.get(&ImageType::SquidCloseFront).unwrap();
+        let image_type1_front = self.images_list.get(&ImageType::SquidOpen).unwrap();
+        let image_type2_front = self.images_list.get(&ImageType::SquidClose).unwrap();
 
         for _ in 0..invader_column {
             self.enemys_list.push(Enemy {
