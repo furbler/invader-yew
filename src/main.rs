@@ -107,12 +107,8 @@ impl Component for AnimationCanvas {
             ) => {
                 match image_type {
                     ImageType::PlayerFront => self.player.image_front = Some(image_bitmap),
-                    ImageType::PlayerShadow => self.player.image_shadow = Some(image_bitmap),
                     ImageType::PlayerBulletFront => {
                         self.player.bullet.image_front = Some(image_bitmap)
-                    }
-                    ImageType::PlayerBulletShadow => {
-                        self.player.bullet.image_shadow = Some(image_bitmap)
                     }
                     ImageType::LandPlayerBulletFront => {
                         self.player.bullet.image_land_front = Some(image_bitmap)
@@ -144,9 +140,7 @@ impl Component for AnimationCanvas {
                 self.player = Player::new(
                     Vec2::new(canvas_width / 2., canvas_height - 90.),
                     self.player.image_front.clone().unwrap(),
-                    self.player.image_shadow.clone().unwrap(),
                     self.player.bullet.image_front.clone().unwrap(),
-                    self.player.bullet.image_shadow.clone().unwrap(),
                     self.player.bullet.image_land_front.clone().unwrap(),
                     self.player.bullet.image_land_shadow.clone().unwrap(),
                 );
@@ -250,4 +244,10 @@ fn main() {
     // デバッグ出力用
     wasm_logger::init(wasm_logger::Config::default());
     yew::start_app::<App>();
+}
+
+// 指定した範囲を背景色で塗りつぶす
+fn draw_background_rect(ctx: &CanvasRenderingContext2d, x: f64, y: f64, width: f64, height: f64) {
+    ctx.set_fill_style(&JsValue::from("rgb(0,0,0)"));
+    ctx.fill_rect(x, y, width, height);
 }

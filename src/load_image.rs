@@ -15,15 +15,6 @@ pub enum ImageType {
     SquidCloseFront,
     PlayerBulletFront,
 
-    PlayerShadow,
-    OctopusOpenShadow,
-    OctopusCloseShadow,
-    CrabBanzaiShadow,
-    CrabDownShadow,
-    SquidOpenShadow,
-    SquidCloseShadow,
-    PlayerBulletShadow,
-
     ExplosionTurquoise,
     ExplosionPurple,
     ExpolsionGreen,
@@ -44,14 +35,6 @@ impl ImageType {
             ImageType::SquidOpenFront,
             ImageType::SquidCloseFront,
             ImageType::PlayerBulletFront,
-            ImageType::PlayerShadow,
-            ImageType::CrabBanzaiShadow,
-            ImageType::CrabDownShadow,
-            ImageType::OctopusOpenShadow,
-            ImageType::OctopusCloseShadow,
-            ImageType::SquidOpenShadow,
-            ImageType::SquidCloseShadow,
-            ImageType::PlayerBulletShadow,
             ImageType::ExplosionTurquoise,
             ImageType::ExplosionPurple,
             ImageType::ExpolsionGreen,
@@ -76,15 +59,6 @@ pub fn image_data_collect() -> (HashMap<ImageType, ImageData>, Vec<Vec<u8>>) {
     all_image_list.ret_image_data("squid_open", ImageType::SquidOpenFront, "GREEN");
     all_image_list.ret_image_data("squid_close", ImageType::SquidCloseFront, "GREEN");
     all_image_list.ret_image_data("player_bullet", ImageType::PlayerBulletFront, "TURQUOISE");
-
-    all_image_list.ret_image_data("player", ImageType::PlayerShadow, "BACKGROUND");
-    all_image_list.ret_image_data("crab_banzai", ImageType::CrabBanzaiShadow, "BACKGROUND");
-    all_image_list.ret_image_data("crab_down", ImageType::CrabDownShadow, "BACKGROUND");
-    all_image_list.ret_image_data("octopus_open", ImageType::OctopusOpenShadow, "BACKGROUND");
-    all_image_list.ret_image_data("octopus_close", ImageType::OctopusCloseShadow, "BACKGROUND");
-    all_image_list.ret_image_data("squid_open", ImageType::SquidOpenShadow, "BACKGROUND");
-    all_image_list.ret_image_data("squid_close", ImageType::SquidCloseShadow, "BACKGROUND");
-    all_image_list.ret_image_data("player_bullet", ImageType::PlayerBulletShadow, "BACKGROUND");
 
     all_image_list.ret_image_data("explosion", ImageType::ExplosionTurquoise, "TURQUOISE");
     all_image_list.ret_image_data("explosion", ImageType::ExplosionPurple, "PURPLE");

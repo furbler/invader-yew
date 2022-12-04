@@ -1,22 +1,22 @@
 use std::ops::Deref;
 
 use crate::dot_data::set_color;
+use crate::draw_background_rect;
 use crate::input::KeyDown;
 use crate::math::Vec2;
 use web_sys::CanvasRenderingContext2d;
 use web_sys::ImageBitmap;
 
 pub struct Bullet {
-    pub width: f64,                        // 描画サイズの幅 [pixel]
-    pub height: f64,                       // 描画サイズの高さ [pixel]
-    pub pos: Vec2,                         // 移動後の中心位置
-    pub pre_pos: Vec2,                     // 前回描画時の中心位置
-    pub live: bool,                        // 弾が画面中に存在しているか否か
-    pub can_shot: bool,                    // 射撃可能ならば真
-    land_effect_cnt: Option<i32>,          // エフェクト表示の残りカウント
+    pub width: f64,                       // 描画サイズの幅 [pixel]
+    pub height: f64,                      // 描画サイズの高さ [pixel]
+    pub pos: Vec2,                        // 移動後の中心位置
+    pub pre_pos: Vec2,                    // 前回描画時の中心位置
+    pub live: bool,                       // 弾が画面中に存在しているか否か
+    pub can_shot: bool,                   // 射撃可能ならば真
+    land_effect_cnt: Option<i32>,         // エフェクト表示の残りカウント
     pub remove: Option<Vec2>, // 削除する際に残った描画を消す処理が必要であればSome(位置)で表す
     pub image_front: Option<ImageBitmap>, // 表画像
-    pub image_shadow: Option<ImageBitmap>, // 影画像
     width_land_effect: f64,
     height_land_effect: f64,
     pub image_land_front: Option<ImageBitmap>, // 着弾時の表画像
@@ -36,14 +36,12 @@ impl Bullet {
             width_land_effect: 0.,
             height_land_effect: 0.,
             image_front: None,
-            image_shadow: None,
             image_land_front: None,
             image_land_shadow: None,
         }
     }
     fn new_image(
         image_front: ImageBitmap,
-        image_shadow: ImageBitmap,
         image_land_front: ImageBitmap,
         image_land_shadow: ImageBitmap,
     ) -> Self {
@@ -59,7 +57,6 @@ impl Bullet {
             height_land_effect: image_land_front.height() as f64 * 2.5,
             remove: None,
             image_front: Some(image_front),
-            image_shadow: Some(image_shadow),
             image_land_front: Some(image_land_front),
             image_land_shadow: Some(image_land_shadow),
         }
@@ -136,28 +133,26 @@ impl Bullet {
 
     fn render(&mut self, ctx: &CanvasRenderingContext2d) {
         if let Some(land_pos) = self.remove {
-            // 影画像(最後に残った部分を消す)
-            ctx.draw_image_with_image_bitmap_and_dw_and_dh(
-                &self.image_shadow.as_ref().unwrap(),
+            // 最後に残った部分を消す
+            draw_background_rect(
+                ctx,
                 land_pos.x - self.width / 2.,
                 land_pos.y - self.height / 2.,
                 self.width,
                 self.height,
-            )
-            .unwrap();
+            );
             self.remove = None;
         }
         // プレイヤーの弾が画面上に存在する時のみ描画する
         if self.live {
             // 影画像(前回の部分を消す)
-            ctx.draw_image_with_image_bitmap_and_dw_and_dh(
-                &self.image_shadow.as_ref().unwrap(),
+            draw_background_rect(
+                ctx,
                 self.pre_pos.x - self.width / 2.,
                 self.pre_pos.y - self.height / 2.,
                 self.width,
                 self.height,
-            )
-            .unwrap();
+            );
             // 表画像
             ctx.draw_image_with_image_bitmap_and_dw_and_dh(
                 &self.image_front.as_ref().unwrap(),
@@ -201,13 +196,12 @@ impl Bullet {
 }
 
 pub struct Player {
-    width: f64,                            // 描画サイズの幅 [pixel]
-    height: f64,                           // 描画サイズの高さ [pixel]
-    pos: Vec2,                             // 移動後の中心位置
-    pre_pos: Vec2,                         // 前回描画時の中心位置
-    pub image_front: Option<ImageBitmap>,  // 表画像
-    pub image_shadow: Option<ImageBitmap>, // 影画像
-    pub bullet: Bullet,                    // 持ち弾(1発のみ)
+    width: f64,                           // 描画サイズの幅 [pixel]
+    height: f64,                          // 描画サイズの高さ [pixel]
+    pos: Vec2,                            // 移動後の中心位置
+    pre_pos: Vec2,                        // 前回描画時の中心位置
+    pub image_front: Option<ImageBitmap>, // 表画像
+    pub bullet: Bullet,                   // 持ち弾(1発のみ)
 }
 
 impl Player {
@@ -219,16 +213,13 @@ impl Player {
             pos: Vec2 { x: 0., y: 0. },
             pre_pos: Vec2 { x: 0., y: 0. },
             image_front: None,
-            image_shadow: None,
             bullet: Bullet::empty(),
         }
     }
     pub fn new(
         pos: Vec2,
         image_front: ImageBitmap,
-        image_shadow: ImageBitmap,
         image_bullet_front: ImageBitmap,
-        image_bullet_shadow: ImageBitmap,
         image_land_bullet_front: ImageBitmap,
         image_land_bullet_shadow: ImageBitmap,
     ) -> Self {
@@ -238,10 +229,8 @@ impl Player {
             pos,
             pre_pos: pos,
             image_front: Some(image_front),
-            image_shadow: Some(image_shadow),
             bullet: Bullet::new_image(
                 image_bullet_front,
-                image_bullet_shadow,
                 image_land_bullet_front,
                 image_land_bullet_shadow,
             ),
@@ -266,14 +255,13 @@ impl Player {
     }
     pub fn render(&mut self, ctx: &CanvasRenderingContext2d) {
         // 影画像(前回の部分を消す)
-        ctx.draw_image_with_image_bitmap_and_dw_and_dh(
-            &self.image_shadow.as_ref().unwrap(),
+        draw_background_rect(
+            ctx,
             self.pre_pos.x - self.width / 2.,
             self.pre_pos.y - self.height / 2.,
             self.width,
             self.height,
-        )
-        .unwrap();
+        );
         // 表画像
         ctx.draw_image_with_image_bitmap_and_dw_and_dh(
             &self.image_front.as_ref().unwrap(),

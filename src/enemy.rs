@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use web_sys::CanvasRenderingContext2d;
 use web_sys::ImageBitmap;
 
+use crate::draw_background_rect;
 use crate::load_image::ImageType;
 use crate::math::Vec2;
 
@@ -80,9 +81,6 @@ struct Enemy {
     // 表画像
     image_type1_front: ImageBitmap,
     image_type2_front: ImageBitmap,
-    // 影画像
-    image_type1_shadow: ImageBitmap,
-    image_type2_shadow: ImageBitmap,
 }
 
 impl Enemy {
@@ -132,21 +130,14 @@ impl Enemy {
     fn render(&mut self, ctx: &CanvasRenderingContext2d) {
         // 削除処理
         if self.remove {
-            // 影の方は常に表画像と逆(動く時必ず画像タイプが切り替わるため)
-            let show_image_shadow = if self.show_image_type {
-                &self.image_type2_shadow
-            } else {
-                &self.image_type1_shadow
-            };
             // 影画像(前回の部分を消す)
-            ctx.draw_image_with_image_bitmap_and_dw_and_dh(
-                show_image_shadow,
+            draw_background_rect(
+                ctx,
                 self.pre_pos.x - self.width / 2.,
                 self.pre_pos.y - self.height / 2.,
                 self.width,
                 self.height,
-            )
-            .unwrap();
+            );
             // 削除処理完了
             self.remove = false;
         }
@@ -161,21 +152,14 @@ impl Enemy {
         } else {
             &self.image_type2_front
         };
-        // 影の方は常に表画像と逆(動く時必ず画像タイプが切り替わるため)
-        let show_image_shadow = if self.show_image_type {
-            &self.image_type2_shadow
-        } else {
-            &self.image_type1_shadow
-        };
         // 影画像(前回の部分を消す)
-        ctx.draw_image_with_image_bitmap_and_dw_and_dh(
-            show_image_shadow,
+        draw_background_rect(
+            ctx,
             self.pre_pos.x - self.width / 2.,
             self.pre_pos.y - self.height / 2.,
             self.width,
             self.height,
-        )
-        .unwrap();
+        );
         // 表画像
         ctx.draw_image_with_image_bitmap_and_dw_and_dh(
             show_image_front,
@@ -228,12 +212,6 @@ impl EnemyManage {
     pub fn register_enemys(&mut self, canvas_height: f64) {
         let image_type1_front = self.images_list.get(&ImageType::OctopusOpenFront).unwrap();
         let image_type2_front = self.images_list.get(&ImageType::OctopusCloseFront).unwrap();
-        let image_type1_shadow = self.images_list.get(&ImageType::OctopusOpenShadow).unwrap();
-        let image_type2_shadow = self
-            .images_list
-            .get(&ImageType::OctopusCloseShadow)
-            .unwrap();
-
         let invader_column = 11;
         // 縦横の間隔
         let gap_x = 47.;
@@ -254,8 +232,6 @@ impl EnemyManage {
                     show_image_type: true,
                     image_type1_front: image_type1_front.clone(),
                     image_type2_front: image_type2_front.clone(),
-                    image_type1_shadow: image_type1_shadow.clone(),
-                    image_type2_shadow: image_type2_shadow.clone(),
                 });
                 invader_pos.x += gap_x;
             }
@@ -265,8 +241,6 @@ impl EnemyManage {
 
         let image_type1_front = self.images_list.get(&ImageType::CrabBanzaiFront).unwrap();
         let image_type2_front = self.images_list.get(&ImageType::CrabDownFront).unwrap();
-        let image_type1_shadow = self.images_list.get(&ImageType::CrabBanzaiShadow).unwrap();
-        let image_type2_shadow = self.images_list.get(&ImageType::CrabDownShadow).unwrap();
 
         for _ in 0..2 {
             for _ in 0..invader_column {
@@ -282,8 +256,6 @@ impl EnemyManage {
                     show_image_type: true,
                     image_type1_front: image_type1_front.clone(),
                     image_type2_front: image_type2_front.clone(),
-                    image_type1_shadow: image_type1_shadow.clone(),
-                    image_type2_shadow: image_type2_shadow.clone(),
                 });
                 invader_pos.x += gap_x;
             }
@@ -292,8 +264,6 @@ impl EnemyManage {
         }
         let image_type1_front = self.images_list.get(&ImageType::SquidOpenFront).unwrap();
         let image_type2_front = self.images_list.get(&ImageType::SquidCloseFront).unwrap();
-        let image_type1_shadow = self.images_list.get(&ImageType::SquidOpenShadow).unwrap();
-        let image_type2_shadow = self.images_list.get(&ImageType::SquidCloseShadow).unwrap();
 
         for _ in 0..invader_column {
             self.enemys_list.push(Enemy {
@@ -308,8 +278,6 @@ impl EnemyManage {
                 show_image_type: true,
                 image_type1_front: image_type1_front.clone(),
                 image_type2_front: image_type2_front.clone(),
-                image_type1_shadow: image_type1_shadow.clone(),
-                image_type2_shadow: image_type2_shadow.clone(),
             });
             invader_pos.x += gap_x;
         }
