@@ -43,6 +43,7 @@ impl ImageType {
             ImageType::LandPlayerBulletFront,
             ImageType::LandPlayerBulletShadow,
             ImageType::Torchika,
+            ImageType::Ufo,
         ]
     }
 }

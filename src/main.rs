@@ -10,6 +10,7 @@ use enemy::*;
 use load_image::ImageType;
 use math::Vec2;
 use player::Player;
+use ufo::Ufo;
 
 mod dot_data;
 mod enemy;
@@ -17,6 +18,7 @@ mod input;
 mod load_image;
 mod math;
 mod player;
+mod ufo;
 
 pub enum Msg {
     // ビットマップ画像を取得
@@ -37,6 +39,7 @@ struct AnimationCanvas {
     player: Player,
     enemy_manage: EnemyManage,
     torchika: Option<ImageBitmap>,
+    ufo: Ufo,
     callback: Closure<dyn FnMut()>,
     input_key_down: Rc<RefCell<input::KeyDown>>,
     need_to_screen_init: bool, // 真ならば画面全体の初期化が必要
@@ -64,6 +67,7 @@ impl Component for AnimationCanvas {
             enemy_manage: EnemyManage::default(),
             torchika: None,
             callback,
+            ufo: Ufo::empty(),
             input_key_down: Rc::new(RefCell::new(input::KeyDown {
                 left: false,
                 right: false,
@@ -115,6 +119,7 @@ impl Component for AnimationCanvas {
                         self.player.bullet.image_land_shadow = Some(image_bitmap)
                     }
                     ImageType::Torchika => self.torchika = Some(image_bitmap),
+                    ImageType::Ufo => self.ufo = Ufo::new(image_bitmap),
                     _ => {
                         self.enemy_manage
                             .images_list
@@ -176,7 +181,6 @@ impl AnimationCanvas {
         let ctx: CanvasRenderingContext2d =
             canvas.get_context("2d").unwrap().unwrap().unchecked_into();
         let (canvas_width, canvas_height) = (canvas.width() as f64, canvas.height() as f64);
-        // 画面全体クリア
         ctx.set_global_alpha(1.);
         // 画面全体の初期化
         if self.need_to_screen_init {
@@ -206,7 +210,6 @@ impl AnimationCanvas {
                 )
                 .unwrap();
             }
-
             // 初期化は最初のみ
             self.need_to_screen_init = false;
         }
@@ -218,9 +221,12 @@ impl AnimationCanvas {
             .update(&ctx, &self.input_key_down.borrow(), canvas_width);
         // 敵インベーダーの処理
         self.enemy_manage.update(&ctx, &mut self.player.bullet);
+        // UFOの処理
+        self.ufo.update(&ctx, canvas_width);
 
         self.player.render(&ctx);
         self.enemy_manage.render(&ctx);
+        self.ufo.render(&ctx);
 
         window()
             .unwrap()
