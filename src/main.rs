@@ -119,7 +119,8 @@ impl Component for AnimationCanvas {
                         self.player.bullet.image_land_shadow = Some(image_bitmap)
                     }
                     ImageType::Torchika => self.torchika = Some(image_bitmap),
-                    ImageType::Ufo => self.ufo = Ufo::new(image_bitmap),
+                    ImageType::Ufo => self.ufo.image = Some(image_bitmap),
+                    ImageType::UfoExplosion => self.ufo.explosion.image = Some(image_bitmap),
                     _ => {
                         self.enemy_manage
                             .images_list
@@ -146,6 +147,10 @@ impl Component for AnimationCanvas {
                     self.player.bullet.image_front.clone().unwrap(),
                     self.player.bullet.image_land_front.clone().unwrap(),
                     self.player.bullet.image_land_shadow.clone().unwrap(),
+                );
+                self.ufo = Ufo::new(
+                    self.ufo.image.clone().unwrap(),
+                    self.ufo.explosion.image.clone().unwrap(),
                 );
                 // キー入力情報初期化
                 input::input_setup(&self.input_key_down);
@@ -222,7 +227,7 @@ impl AnimationCanvas {
         // 敵インベーダーの処理
         self.enemy_manage.update(&ctx, &mut self.player.bullet);
         // UFOの処理
-        self.ufo.update(&ctx, canvas_width);
+        self.ufo.update(&ctx, canvas_width, &mut self.player.bullet);
 
         self.player.render(&ctx);
         self.enemy_manage.render(&ctx);
