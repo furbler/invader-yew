@@ -24,6 +24,9 @@ pub enum ImageType {
     Torchika,
     Ufo,
     UfoExplosion,
+    EnemyBulletSquiggly,
+    EnemyBulletPlunger,
+    EnemyBulletRolling,
 }
 // すべての画像タイプをまとめて返す
 impl ImageType {
@@ -46,6 +49,9 @@ impl ImageType {
             ImageType::Torchika,
             ImageType::Ufo,
             ImageType::UfoExplosion,
+            ImageType::EnemyBulletSquiggly,
+            ImageType::EnemyBulletPlunger,
+            ImageType::EnemyBulletRolling,
         ]
     }
 }
@@ -83,6 +89,22 @@ pub fn image_data_collect() -> (HashMap<ImageType, ImageData>, Vec<Vec<u8>>) {
     all_image_list.ret_image_data("torchika", ImageType::Torchika, "RED");
     all_image_list.ret_image_data("ufo", ImageType::Ufo, "PURPLE");
     all_image_list.ret_image_data("ufo_explosion", ImageType::UfoExplosion, "PURPLE");
+
+    all_image_list.ret_image_data(
+        "enemy_bullet_squiggly",
+        ImageType::EnemyBulletSquiggly,
+        "YELLOW",
+    );
+    all_image_list.ret_image_data(
+        "enemy_bullet_plunger",
+        ImageType::EnemyBulletPlunger,
+        "YELLOW",
+    );
+    all_image_list.ret_image_data(
+        "enemy_bullet_rolling",
+        ImageType::EnemyBulletRolling,
+        "YELLOW",
+    );
 
     (
         all_image_list.image_data_list,

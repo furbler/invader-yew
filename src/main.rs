@@ -230,7 +230,7 @@ impl AnimationCanvas {
         self.ufo.update(&ctx, canvas_width, &mut self.player.bullet);
 
         self.player.render(&ctx);
-        self.enemy_manage.render(&ctx);
+        self.enemy_manage.render(&ctx, canvas_width);
         self.ufo.render(&ctx);
 
         window()

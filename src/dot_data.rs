@@ -227,6 +227,32 @@ pub fn ret_dot_data(name: &str) -> DotShape {
             "_ _ # _ _ _ # _ _ _ # _ _ _ _ # _ _ _ _ _",
         ]),
     };
+    // ジグザク型
+    let enemy_bullet_squiggly = DotShape {
+        width: 3,
+        height: 7,
+        dot_map: convert_dot_map(vec![
+            "_ # _", 
+            "# _ _", 
+            "_ # _", "_ _ #", "_ # _", "# _ _", "_ # _",
+        ]),
+    };
+    // T字型
+    let enemy_bullet_plunger = DotShape {
+        width: 3,
+        height: 7,
+        dot_map: convert_dot_map(vec![
+            "_ # _", "_ # _", "# # #", "_ # _", "_ # _", "_ # _", "_ # _",
+        ]),
+    };
+    // 螺旋状
+    let enemy_bullet_rolling = DotShape {
+        width: 3,
+        height: 7,
+        dot_map: convert_dot_map(vec![
+            "_ # #", "_ # _", "# # _", "_ # #", "_ # _", "# # _", "_ # _",
+        ]),
+    };
 
     match name {
         "player" => player,
@@ -242,6 +268,9 @@ pub fn ret_dot_data(name: &str) -> DotShape {
         "torchika" => torchika,
         "ufo" => ufo,
         "ufo_explosion" => ufo_explosion,
+        "enemy_bullet_squiggly" => enemy_bullet_squiggly,
+        "enemy_bullet_plunger" => enemy_bullet_plunger,
+        "enemy_bullet_rolling" => enemy_bullet_rolling,
         _ => panic!(
             "{}のドットマップ取得に失敗しました。プログラムを終了します。",
             name
@@ -274,6 +303,7 @@ pub fn set_color(color: &str) -> Vec<u8> {
         "PURPLE" => vec![219, 85, 221, 255],    // 紫色
         "GREEN" => vec![98, 222, 109, 255],     // 緑色
         "RED" => vec![210, 0, 0, 255],          // 赤色
+        "YELLOW" => vec![190, 180, 80, 255],    //黄色
         "BACKGROUND" => vec![0, 0, 0, 255],     // 背景色
         _ => panic!("{}色には対応していません。プログラムを終了します。", color),
     }

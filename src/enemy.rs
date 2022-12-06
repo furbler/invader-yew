@@ -12,6 +12,61 @@ enum EnemyType {
     Crab,
     Squid,
 }
+struct Bullet {
+    width: f64,    // 描画サイズの幅 [pixel]
+    height: f64,   // 描画サイズの高さ [pixel]
+    pos: Vec2,     // 移動後の中心位置
+    pre_pos: Vec2, // 前回描画時の中心位置
+    live: bool,    // 弾が画面中に存在しているか否か
+    image: ImageBitmap,
+}
+
+impl Bullet {
+    // 弾を指定された場所から発射
+    fn set(&mut self, pos: Vec2) {
+        self.pos = pos;
+        self.pre_pos = self.pos;
+        self.live = true;
+    }
+    fn update(&mut self, ctx: &CanvasRenderingContext2d, canvas_width: f64) {
+        if self.live {
+            self.pos.y += 3.;
+            // 赤線の当たりに着弾した場合
+            if self.pos.y > canvas_width - 40. {
+                // 弾を消す
+                self.live = false;
+                draw_background_rect(
+                    ctx,
+                    self.pre_pos.x - self.width / 2.,
+                    self.pre_pos.y - self.height / 2.,
+                    self.width,
+                    self.height,
+                );
+            }
+        }
+    }
+    fn render(&mut self, ctx: &CanvasRenderingContext2d) {
+        if self.live {
+            draw_background_rect(
+                ctx,
+                self.pre_pos.x - self.width / 2.,
+                self.pre_pos.y - self.height / 2.,
+                self.width,
+                self.height,
+            );
+            // 表画像
+            ctx.draw_image_with_image_bitmap_and_dw_and_dh(
+                &self.image,
+                self.pos.x - self.width / 2.,
+                self.pos.y - self.height / 2.,
+                self.width,
+                self.height,
+            )
+            .unwrap();
+            self.pre_pos = self.pos;
+        }
+    }
+}
 
 struct Explosion {
     // 爆発エフェクト表示中は
@@ -187,6 +242,12 @@ pub struct EnemyManage {
     enemys_list: Vec<Enemy>,
     // 爆発エフェクト
     explosion: Explosion,
+    // 敵弾3種類
+    bullets: Vec<Bullet>,
+    //敵の各縦列の中で一番下(射撃可能)の個体のインデックス番号
+    can_shot_enemy: Vec<usize>,
+    //射撃してからのフレーム数
+    shot_interval: usize,
 }
 
 impl EnemyManage {
@@ -207,6 +268,10 @@ impl EnemyManage {
                 enemy_type_map: HashMap::new(),
                 shadow: None,
             },
+            bullets: Vec::new(),
+            // vec![0..11];
+            can_shot_enemy: core::array::from_fn::<usize, 11, _>(|i| i).to_vec(),
+            shot_interval: 0,
         }
     }
     pub fn register_enemys(&mut self, canvas_height: f64) {
@@ -302,7 +367,47 @@ impl EnemyManage {
             enemy_type_map: explosion_image,
             shadow: Some(explosion_shadow.clone()),
             ..self.explosion
-        }
+        };
+
+        let image = self
+            .images_list
+            .get(&ImageType::EnemyBulletPlunger)
+            .unwrap();
+        let bullet = Bullet {
+            width: image.width() as f64 * 2.5,
+            height: image.height() as f64 * 2.5,
+            pos: Vec2::new(0., 0.),
+            pre_pos: Vec2::new(0., 0.),
+            live: false,
+            image: image.clone(),
+        };
+        self.bullets.push(bullet);
+        let image = self
+            .images_list
+            .get(&ImageType::EnemyBulletSquiggly)
+            .unwrap();
+        let bullet = Bullet {
+            width: image.width() as f64 * 2.5,
+            height: image.height() as f64 * 2.5,
+            pos: Vec2::new(0., 0.),
+            pre_pos: Vec2::new(0., 0.),
+            live: false,
+            image: image.clone(),
+        };
+        self.bullets.push(bullet);
+        let image = self
+            .images_list
+            .get(&ImageType::EnemyBulletRolling)
+            .unwrap();
+        let bullet = Bullet {
+            width: image.width() as f64 * 2.5,
+            height: image.height() as f64 * 2.5,
+            pos: Vec2::new(0., 0.),
+            pre_pos: Vec2::new(0., 0.),
+            live: false,
+            image: image.clone(),
+        };
+        self.bullets.push(bullet);
     }
 
     pub fn update(
@@ -370,10 +475,51 @@ impl EnemyManage {
         } else {
             log::info!("敵は全滅した。");
         }
+        //射撃可能な敵個体から死んだ個体を削除
+        self.update_can_shot_list();
+
+        for bullet in &mut self.bullets {
+            // 敵が全滅していたら発射しない
+            if self.can_shot_enemy.len() == 0 {
+                return;
+            }
+            if !bullet.live && self.shot_interval > 30 {
+                //疑似乱数で発射タイミングを決定(ここの発射タイミングのプログラムはあとで変える)
+                let index = self.can_shot_enemy[self.shot_interval % self.can_shot_enemy.len()];
+                bullet.set(Vec2::new(
+                    self.enemys_list[index].pos.x,
+                    self.enemys_list[index].pos.y + 20.,
+                ));
+                self.shot_interval = 0;
+            }
+        }
+        self.shot_interval += 1;
     }
-    pub fn render(&mut self, ctx: &CanvasRenderingContext2d) {
+    pub fn render(&mut self, ctx: &CanvasRenderingContext2d, canvas_width: f64) {
         self.enemys_list.iter_mut().for_each(|enemy| {
             enemy.render(ctx);
         });
+        //弾
+        for b in &mut self.bullets {
+            b.update(ctx, canvas_width);
+            b.render(ctx);
+        }
+    }
+    //各縦列で射撃可能な個体の情報を更新
+    fn update_can_shot_list(&mut self) {
+        // 各縦列について
+        for i in 0..self.can_shot_enemy.len() {
+            //登録されている個体が死んでいた場合
+            while !self.enemys_list[self.can_shot_enemy[i]].live {
+                //一段上の個体を登録
+                self.can_shot_enemy[i] += 11;
+                //はみだしていたら、その縦一列は全滅状態
+                if self.can_shot_enemy[i] >= self.enemys_list.len() {
+                    break;
+                }
+            }
+        }
+        //はみだした部分(全滅した縦列)を消す
+        self.can_shot_enemy.retain(|x| x < &self.enemys_list.len());
     }
 }
