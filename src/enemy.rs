@@ -19,6 +19,7 @@ struct Bullet {
     pre_pos: Vec2, // 前回描画時の中心位置
     live: bool,    // 弾が画面中に存在しているか否か
     image: ImageBitmap,
+    explosion: BulletExplosion,
 }
 
 impl Bullet {
@@ -28,11 +29,11 @@ impl Bullet {
         self.pre_pos = self.pos;
         self.live = true;
     }
-    fn update(&mut self, ctx: &CanvasRenderingContext2d, canvas_width: f64) {
+    fn update(&mut self, ctx: &CanvasRenderingContext2d, canvas_height: f64) {
         if self.live {
             self.pos.y += 3.;
             // 赤線の当たりに着弾した場合
-            if self.pos.y > canvas_width - 40. {
+            if self.pos.y > canvas_height - 52. {
                 // 弾を消す
                 self.live = false;
                 draw_background_rect(
@@ -42,6 +43,8 @@ impl Bullet {
                     self.width,
                     self.height,
                 );
+                self.explosion.pos = self.pos;
+                self.explosion.effect_cnt = Some(20);
             }
         }
     }
@@ -65,7 +68,40 @@ impl Bullet {
             .unwrap();
             self.pre_pos = self.pos;
         }
+        if let Some(cnt) = self.explosion.effect_cnt {
+            //一定時間は表示
+            if cnt > 0 {
+                ctx.draw_image_with_image_bitmap_and_dw_and_dh(
+                    self.explosion.image_front.as_ref().unwrap(),
+                    self.explosion.pos.x - self.explosion.width / 2.,
+                    self.explosion.pos.y - self.explosion.height / 2.,
+                    self.explosion.width,
+                    self.explosion.height,
+                )
+                .unwrap();
+                self.explosion.effect_cnt = Some(cnt - 1);
+            } else {
+                //一定時間経過後は削除
+                ctx.draw_image_with_image_bitmap_and_dw_and_dh(
+                    self.explosion.image_shadow.as_ref().unwrap(),
+                    self.explosion.pos.x - self.explosion.width / 2.,
+                    self.explosion.pos.y - self.explosion.height / 2.,
+                    self.explosion.width,
+                    self.explosion.height,
+                )
+                .unwrap();
+                self.explosion.effect_cnt = None;
+            }
+        }
     }
+}
+struct BulletExplosion {
+    width: f64,
+    height: f64,
+    pos: Vec2,
+    effect_cnt: Option<i32>,           //エフェクト表示中はSome(カウント)
+    image_front: Option<ImageBitmap>,  // 着弾時の表画像
+    image_shadow: Option<ImageBitmap>, // 着弾時の影画像
 }
 
 struct Explosion {
@@ -373,6 +409,14 @@ impl EnemyManage {
             .images_list
             .get(&ImageType::EnemyBulletPlunger)
             .unwrap();
+        let image_explosion_front = self
+            .images_list
+            .get(&ImageType::EnemyBulletExplosionFront)
+            .unwrap();
+        let image_explosion_shadow = self
+            .images_list
+            .get(&ImageType::EnemyBulletExplosionShadow)
+            .unwrap();
         let bullet = Bullet {
             width: image.width() as f64 * 2.5,
             height: image.height() as f64 * 2.5,
@@ -380,24 +424,28 @@ impl EnemyManage {
             pre_pos: Vec2::new(0., 0.),
             live: false,
             image: image.clone(),
+            explosion: BulletExplosion {
+                width: image_explosion_front.width() as f64 * 3.,
+                height: image_explosion_front.height() as f64 * 3.,
+                pos: Vec2::new(0., 0.),
+                effect_cnt: None,
+                image_front: Some(image_explosion_front.clone()),
+                image_shadow: Some(image_explosion_shadow.clone()),
+            },
         };
         self.bullets.push(bullet);
+
         let image = self
             .images_list
             .get(&ImageType::EnemyBulletSquiggly)
             .unwrap();
-        let bullet = Bullet {
-            width: image.width() as f64 * 2.5,
-            height: image.height() as f64 * 2.5,
-            pos: Vec2::new(0., 0.),
-            pre_pos: Vec2::new(0., 0.),
-            live: false,
-            image: image.clone(),
-        };
-        self.bullets.push(bullet);
-        let image = self
+        let image_explosion_front = self
             .images_list
-            .get(&ImageType::EnemyBulletRolling)
+            .get(&ImageType::EnemyBulletExplosionFront)
+            .unwrap();
+        let image_explosion_shadow = self
+            .images_list
+            .get(&ImageType::EnemyBulletExplosionShadow)
             .unwrap();
         let bullet = Bullet {
             width: image.width() as f64 * 2.5,
@@ -406,6 +454,44 @@ impl EnemyManage {
             pre_pos: Vec2::new(0., 0.),
             live: false,
             image: image.clone(),
+            explosion: BulletExplosion {
+                width: image_explosion_front.width() as f64 * 3.,
+                height: image_explosion_front.height() as f64 * 3.,
+                pos: Vec2::new(0., 0.),
+                effect_cnt: None,
+                image_front: Some(image_explosion_front.clone()),
+                image_shadow: Some(image_explosion_shadow.clone()),
+            },
+        };
+        self.bullets.push(bullet);
+
+        let image = self
+            .images_list
+            .get(&ImageType::EnemyBulletRolling)
+            .unwrap();
+        let image_explosion_front = self
+            .images_list
+            .get(&ImageType::EnemyBulletExplosionFront)
+            .unwrap();
+        let image_explosion_shadow = self
+            .images_list
+            .get(&ImageType::EnemyBulletExplosionShadow)
+            .unwrap();
+        let bullet = Bullet {
+            width: image.width() as f64 * 2.5,
+            height: image.height() as f64 * 2.5,
+            pos: Vec2::new(0., 0.),
+            pre_pos: Vec2::new(0., 0.),
+            live: false,
+            image: image.clone(),
+            explosion: BulletExplosion {
+                width: image_explosion_front.width() as f64 * 3.,
+                height: image_explosion_front.height() as f64 * 3.,
+                pos: Vec2::new(0., 0.),
+                effect_cnt: None,
+                image_front: Some(image_explosion_front.clone()),
+                image_shadow: Some(image_explosion_shadow.clone()),
+            },
         };
         self.bullets.push(bullet);
     }
@@ -483,7 +569,8 @@ impl EnemyManage {
             if self.can_shot_enemy.len() == 0 {
                 return;
             }
-            if !bullet.live && self.shot_interval > 30 {
+            //弾が消滅済みで、かつ前回の射撃から(3発の弾共通で)一定時間経過して、かつ弾の爆発エフェクト表示が終了していた場合
+            if !bullet.live && self.shot_interval > 30 && bullet.explosion.effect_cnt == None {
                 //疑似乱数で発射タイミングを決定(ここの発射タイミングのプログラムはあとで変える)
                 let index = self.can_shot_enemy[self.shot_interval % self.can_shot_enemy.len()];
                 bullet.set(Vec2::new(
@@ -495,13 +582,13 @@ impl EnemyManage {
         }
         self.shot_interval += 1;
     }
-    pub fn render(&mut self, ctx: &CanvasRenderingContext2d, canvas_width: f64) {
+    pub fn render(&mut self, ctx: &CanvasRenderingContext2d, canvas_height: f64) {
         self.enemys_list.iter_mut().for_each(|enemy| {
             enemy.render(ctx);
         });
         //弾
         for b in &mut self.bullets {
-            b.update(ctx, canvas_width);
+            b.update(ctx, canvas_height);
             b.render(ctx);
         }
     }

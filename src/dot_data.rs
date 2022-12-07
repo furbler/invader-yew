@@ -232,9 +232,7 @@ pub fn ret_dot_data(name: &str) -> DotShape {
         width: 3,
         height: 7,
         dot_map: convert_dot_map(vec![
-            "_ # _", 
-            "# _ _", 
-            "_ # _", "_ _ #", "_ # _", "# _ _", "_ # _",
+            "_ # _", "# _ _", "_ # _", "_ _ #", "_ # _", "# _ _", "_ # _",
         ]),
     };
     // T字型
@@ -254,6 +252,20 @@ pub fn ret_dot_data(name: &str) -> DotShape {
         ]),
     };
 
+    let enemy_bullet_explosion = DotShape {
+        width: 6,
+        height: 8,
+        dot_map: convert_dot_map(vec![
+            "_ _ # _ _ _",
+            "# _ _ _ # _",
+            "_ _ # # _ #",
+            "_ # # # # _",
+            "# _ # # # _",
+            "_ # # # # #",
+            "# _ # # # _",
+            "_ # _ # _ #",
+        ]),
+    };
     match name {
         "player" => player,
         "player_bullet" => bullet_player,
@@ -271,6 +283,7 @@ pub fn ret_dot_data(name: &str) -> DotShape {
         "enemy_bullet_squiggly" => enemy_bullet_squiggly,
         "enemy_bullet_plunger" => enemy_bullet_plunger,
         "enemy_bullet_rolling" => enemy_bullet_rolling,
+        "enemy_bullet_explosion" => enemy_bullet_explosion,
         _ => panic!(
             "{}のドットマップ取得に失敗しました。プログラムを終了します。",
             name

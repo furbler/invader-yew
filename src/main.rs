@@ -195,8 +195,8 @@ impl AnimationCanvas {
             ctx.set_stroke_style(&JsValue::from("rgb(180,0,0)"));
             ctx.set_line_width(2.);
             ctx.begin_path();
-            ctx.move_to(10., canvas_height - 40.);
-            ctx.line_to(canvas_width - 10., canvas_height - 40.);
+            ctx.move_to(10., canvas_height - 39.);
+            ctx.line_to(canvas_width - 10., canvas_height - 39.);
             ctx.stroke();
             // トーチカの描画サイズ
             let (torchika_width, torchika_height) = (
@@ -230,7 +230,7 @@ impl AnimationCanvas {
         self.ufo.update(&ctx, canvas_width, &mut self.player.bullet);
 
         self.player.render(&ctx);
-        self.enemy_manage.render(&ctx, canvas_width);
+        self.enemy_manage.render(&ctx, canvas_height);
         self.ufo.render(&ctx);
 
         window()
