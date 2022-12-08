@@ -1,3 +1,4 @@
+use crate::dot_data::Color;
 use std::collections::HashMap;
 use wasm_bindgen::{Clamped, JsCast, JsValue};
 use web_sys::{window, ImageBitmap, ImageData};
@@ -65,59 +66,59 @@ pub fn image_data_collect() -> (HashMap<ImageType, ImageData>, Vec<Vec<u8>>) {
         image_data_list: HashMap::new(),
         image_rgba_list: Vec::new(),
     };
-    all_image_list.ret_image_data("player", ImageType::Player, "TURQUOISE");
-    all_image_list.ret_image_data("crab_banzai", ImageType::CrabBanzai, "TURQUOISE");
-    all_image_list.ret_image_data("crab_down", ImageType::CrabDown, "TURQUOISE");
-    all_image_list.ret_image_data("octopus_open", ImageType::OctopusOpen, "PURPLE");
-    all_image_list.ret_image_data("octopus_close", ImageType::OctopusClose, "PURPLE");
-    all_image_list.ret_image_data("squid_open", ImageType::SquidOpen, "GREEN");
-    all_image_list.ret_image_data("squid_close", ImageType::SquidClose, "GREEN");
-    all_image_list.ret_image_data("player_bullet", ImageType::PlayerBullet, "TURQUOISE");
+    all_image_list.ret_image_data("player", ImageType::Player, Color::TURQUOISE);
+    all_image_list.ret_image_data("crab_banzai", ImageType::CrabBanzai, Color::TURQUOISE);
+    all_image_list.ret_image_data("crab_down", ImageType::CrabDown, Color::TURQUOISE);
+    all_image_list.ret_image_data("octopus_open", ImageType::OctopusOpen, Color::PURPLE);
+    all_image_list.ret_image_data("octopus_close", ImageType::OctopusClose, Color::PURPLE);
+    all_image_list.ret_image_data("squid_open", ImageType::SquidOpen, Color::GREEN);
+    all_image_list.ret_image_data("squid_close", ImageType::SquidClose, Color::GREEN);
+    all_image_list.ret_image_data("player_bullet", ImageType::PlayerBullet, Color::TURQUOISE);
 
-    all_image_list.ret_image_data("explosion", ImageType::ExplosionTurquoise, "TURQUOISE");
-    all_image_list.ret_image_data("explosion", ImageType::ExplosionPurple, "PURPLE");
-    all_image_list.ret_image_data("explosion", ImageType::ExpolsionGreen, "GREEN");
-    all_image_list.ret_image_data("explosion", ImageType::ExplosionShadow, "BACKGROUND");
+    all_image_list.ret_image_data("explosion", ImageType::ExplosionTurquoise, Color::TURQUOISE);
+    all_image_list.ret_image_data("explosion", ImageType::ExplosionPurple, Color::PURPLE);
+    all_image_list.ret_image_data("explosion", ImageType::ExpolsionGreen, Color::GREEN);
+    all_image_list.ret_image_data("explosion", ImageType::ExplosionShadow, Color::BACKGROUND);
 
     all_image_list.ret_image_data(
         "land_player_bullet",
         ImageType::LandPlayerBulletFront,
-        "RED",
+        Color::RED,
     );
     all_image_list.ret_image_data(
         "land_player_bullet",
         ImageType::LandPlayerBulletShadow,
-        "BACKGROUND",
+        Color::BACKGROUND,
     );
 
-    all_image_list.ret_image_data("torchika", ImageType::Torchika, "RED");
-    all_image_list.ret_image_data("ufo", ImageType::Ufo, "PURPLE");
-    all_image_list.ret_image_data("ufo_explosion", ImageType::UfoExplosion, "PURPLE");
+    all_image_list.ret_image_data("torchika", ImageType::Torchika, Color::RED);
+    all_image_list.ret_image_data("ufo", ImageType::Ufo, Color::PURPLE);
+    all_image_list.ret_image_data("ufo_explosion", ImageType::UfoExplosion, Color::PURPLE);
 
     all_image_list.ret_image_data(
         "enemy_bullet_squiggly",
         ImageType::EnemyBulletSquiggly,
-        "YELLOW",
+        Color::YELLOW,
     );
     all_image_list.ret_image_data(
         "enemy_bullet_plunger",
         ImageType::EnemyBulletPlunger,
-        "YELLOW",
+        Color::YELLOW,
     );
     all_image_list.ret_image_data(
         "enemy_bullet_rolling",
         ImageType::EnemyBulletRolling,
-        "YELLOW",
+        Color::YELLOW,
     );
     all_image_list.ret_image_data(
         "enemy_bullet_explosion",
         ImageType::EnemyBulletExplosionFront,
-        "RED",
+        Color::RED,
     );
     all_image_list.ret_image_data(
         "enemy_bullet_explosion",
         ImageType::EnemyBulletExplosionShadow,
-        "BACKGROUND",
+        Color::BACKGROUND,
     );
     (
         all_image_list.image_data_list,
@@ -132,7 +133,7 @@ struct ImageDataList {
 }
 
 impl ImageDataList {
-    fn ret_image_data(&mut self, name: &str, image_type: ImageType, color: &str) {
+    fn ret_image_data(&mut self, name: &str, image_type: ImageType, color: Color) {
         let image_dot = dot_data::ret_dot_data(name);
         let image_rgba = image_dot.create_color_dot_map(color);
         let image_data = ImageData::new_with_u8_clamped_array_and_sh(

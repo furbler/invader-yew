@@ -17,6 +17,7 @@ mod enemy;
 mod input;
 mod load_image;
 mod math;
+mod pixel_ctrl;
 mod player;
 mod ufo;
 
@@ -225,12 +226,13 @@ impl AnimationCanvas {
         self.player
             .update(&ctx, &self.input_key_down.borrow(), canvas_width);
         // 敵インベーダーの処理
-        self.enemy_manage.update(&ctx, &mut self.player.bullet);
+        self.enemy_manage
+            .update(&ctx, canvas_width, canvas_height, &mut self.player.bullet);
         // UFOの処理
         self.ufo.update(&ctx, canvas_width, &mut self.player.bullet);
 
         self.player.render(&ctx);
-        self.enemy_manage.render(&ctx, canvas_height);
+        self.enemy_manage.render(&ctx);
         self.ufo.render(&ctx);
 
         window()

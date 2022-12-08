@@ -1,9 +1,8 @@
-use std::ops::Deref;
-
-use crate::dot_data::set_color;
+use crate::dot_data::Color;
 use crate::draw_background_rect;
 use crate::input::KeyDown;
 use crate::math::Vec2;
+use crate::pixel_ctrl;
 use web_sys::CanvasRenderingContext2d;
 use web_sys::ImageBitmap;
 
@@ -87,32 +86,26 @@ impl Bullet {
             } else {
                 // トーチカへの着弾確認
                 // とりあえず弾の周りのデータまであれば十分
-                let image_data = ctx
-                    .get_image_data(0., 0., canvas_width, self.pos.y + self.height)
-                    .unwrap()
-                    .data();
-                let rgba_map = image_data.deref();
-                // 弾の中心付近の座標
-                let collision_left_pos = Vec2::new(self.pos.x - self.width / 2. - 2., self.pos.y);
-                let collision_right_pos = Vec2::new(self.pos.x + self.width / 2. + 2., self.pos.y);
-                // トーチカの色のrgba
-                let torchika_rgba = set_color("RED");
-                // 指定座標のピクセル値とトーチカのピクセル値を比較して判定
-                let i_left =
-                    (collision_left_pos.y * canvas_width + collision_left_pos.x) as usize * 4;
-                let detect_collision_left = rgba_map[i_left] == torchika_rgba[0]
-                    && rgba_map[i_left + 1] == torchika_rgba[1]
-                    && rgba_map[i_left + 2] == torchika_rgba[2]
-                    && rgba_map[i_left + 3] == torchika_rgba[3];
+                // 弾の中心より少し上の座標
+                let left_pos = Vec2::new(self.pos.x - self.width / 2. - 2., self.pos.y);
+                let left_collision = pixel_ctrl::detect_pixel_diff(
+                    canvas_width,
+                    left_pos,
+                    Color::RED,
+                    ctx.get_image_data(0., 0., canvas_width, self.pos.y + self.height)
+                        .unwrap(),
+                );
 
-                let i_right =
-                    (collision_right_pos.y * canvas_width + collision_right_pos.x) as usize * 4;
-                let detect_collision_right = rgba_map[i_right] == torchika_rgba[0]
-                    && rgba_map[i_right + 1] == torchika_rgba[1]
-                    && rgba_map[i_right + 2] == torchika_rgba[2]
-                    && rgba_map[i_right + 3] == torchika_rgba[3];
-
-                if detect_collision_left || detect_collision_right {
+                let right_pos = Vec2::new(self.pos.x + self.width / 2. + 2., self.pos.y);
+                let right_collision = pixel_ctrl::detect_pixel_diff(
+                    canvas_width,
+                    right_pos,
+                    Color::RED,
+                    ctx.get_image_data(0., 0., canvas_width, self.pos.y + self.height)
+                        .unwrap(),
+                );
+                //トーチカに触れていた場合
+                if left_collision || right_collision {
                     // 着弾処理
                     self.land_obstacle();
                 }

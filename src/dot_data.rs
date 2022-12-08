@@ -1,4 +1,13 @@
 use std::io::Write;
+
+pub enum Color {
+    TURQUOISE,  // 青緑色
+    PURPLE,     // 紫色
+    GREEN,      // 緑色
+    RED,        // 赤色
+    YELLOW,     //黄色
+    BACKGROUND, // 背景色
+}
 pub struct DotShape {
     pub width: u32,              // 幅[ドット]
     pub height: u32,             // 高さ[ドット]
@@ -7,7 +16,7 @@ pub struct DotShape {
 
 impl DotShape {
     // 真偽値で表されたドットマップを、1pixelをrgbaの4バイトで表すVec<u8>に変換
-    pub fn create_color_dot_map(&self, color_str: &str) -> Vec<u8> {
+    pub fn create_color_dot_map(&self, color: Color) -> Vec<u8> {
         // 指定されたサイズと実際のドットマップのサイズが一致しているか確認
         if self.height as usize != self.dot_map.len() {
             panic!("指定されたドットマップの高さが実際のデータと異なります。");
@@ -23,7 +32,7 @@ impl DotShape {
             }
         }
         // ドット絵を描画する部分
-        let color = set_color(color_str);
+        let color = set_color(color);
         // 背景を透過する部分
         let transparent = vec![0, 0, 0, 0];
 
@@ -310,14 +319,13 @@ fn convert_dot_map(dot_map: Vec<&str>) -> Vec<Vec<bool>> {
 }
 
 // 指定した色に対応するrgbaの値を返す
-pub fn set_color(color: &str) -> Vec<u8> {
+pub fn set_color(color: Color) -> Vec<u8> {
     match color {
-        "TURQUOISE" => vec![68, 200, 210, 255], // 青緑色
-        "PURPLE" => vec![219, 85, 221, 255],    // 紫色
-        "GREEN" => vec![98, 222, 109, 255],     // 緑色
-        "RED" => vec![210, 0, 0, 255],          // 赤色
-        "YELLOW" => vec![190, 180, 80, 255],    //黄色
-        "BACKGROUND" => vec![0, 0, 0, 255],     // 背景色
-        _ => panic!("{}色には対応していません。プログラムを終了します。", color),
+        Color::TURQUOISE => vec![68, 200, 210, 255], // 青緑色
+        Color::PURPLE => vec![219, 85, 221, 255],    // 紫色
+        Color::GREEN => vec![98, 222, 109, 255],     // 緑色
+        Color::RED => vec![210, 0, 0, 255],          // 赤色
+        Color::YELLOW => vec![190, 180, 80, 255],    //黄色
+        Color::BACKGROUND => vec![0, 0, 0, 255],     // 背景色
     }
 }
