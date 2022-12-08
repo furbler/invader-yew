@@ -66,59 +66,59 @@ pub fn image_data_collect() -> (HashMap<ImageType, ImageData>, Vec<Vec<u8>>) {
         image_data_list: HashMap::new(),
         image_rgba_list: Vec::new(),
     };
-    all_image_list.ret_image_data("player", ImageType::Player, Color::TURQUOISE);
-    all_image_list.ret_image_data("crab_banzai", ImageType::CrabBanzai, Color::TURQUOISE);
-    all_image_list.ret_image_data("crab_down", ImageType::CrabDown, Color::TURQUOISE);
-    all_image_list.ret_image_data("octopus_open", ImageType::OctopusOpen, Color::PURPLE);
-    all_image_list.ret_image_data("octopus_close", ImageType::OctopusClose, Color::PURPLE);
-    all_image_list.ret_image_data("squid_open", ImageType::SquidOpen, Color::GREEN);
-    all_image_list.ret_image_data("squid_close", ImageType::SquidClose, Color::GREEN);
-    all_image_list.ret_image_data("player_bullet", ImageType::PlayerBullet, Color::TURQUOISE);
+    all_image_list.ret_image_data("player", ImageType::Player, Color::Turquoise);
+    all_image_list.ret_image_data("crab_banzai", ImageType::CrabBanzai, Color::Turquoise);
+    all_image_list.ret_image_data("crab_down", ImageType::CrabDown, Color::Turquoise);
+    all_image_list.ret_image_data("octopus_open", ImageType::OctopusOpen, Color::Purple);
+    all_image_list.ret_image_data("octopus_close", ImageType::OctopusClose, Color::Purple);
+    all_image_list.ret_image_data("squid_open", ImageType::SquidOpen, Color::Green);
+    all_image_list.ret_image_data("squid_close", ImageType::SquidClose, Color::Green);
+    all_image_list.ret_image_data("player_bullet", ImageType::PlayerBullet, Color::Turquoise);
 
-    all_image_list.ret_image_data("explosion", ImageType::ExplosionTurquoise, Color::TURQUOISE);
-    all_image_list.ret_image_data("explosion", ImageType::ExplosionPurple, Color::PURPLE);
-    all_image_list.ret_image_data("explosion", ImageType::ExpolsionGreen, Color::GREEN);
-    all_image_list.ret_image_data("explosion", ImageType::ExplosionShadow, Color::BACKGROUND);
+    all_image_list.ret_image_data("explosion", ImageType::ExplosionTurquoise, Color::Turquoise);
+    all_image_list.ret_image_data("explosion", ImageType::ExplosionPurple, Color::Purple);
+    all_image_list.ret_image_data("explosion", ImageType::ExpolsionGreen, Color::Green);
+    all_image_list.ret_image_data("explosion", ImageType::ExplosionShadow, Color::Background);
 
     all_image_list.ret_image_data(
         "land_player_bullet",
         ImageType::LandPlayerBulletFront,
-        Color::RED,
+        Color::Red,
     );
     all_image_list.ret_image_data(
         "land_player_bullet",
         ImageType::LandPlayerBulletShadow,
-        Color::BACKGROUND,
+        Color::Background,
     );
 
-    all_image_list.ret_image_data("torchika", ImageType::Torchika, Color::RED);
-    all_image_list.ret_image_data("ufo", ImageType::Ufo, Color::PURPLE);
-    all_image_list.ret_image_data("ufo_explosion", ImageType::UfoExplosion, Color::PURPLE);
+    all_image_list.ret_image_data("torchika", ImageType::Torchika, Color::Red);
+    all_image_list.ret_image_data("ufo", ImageType::Ufo, Color::Purple);
+    all_image_list.ret_image_data("ufo_explosion", ImageType::UfoExplosion, Color::Purple);
 
     all_image_list.ret_image_data(
         "enemy_bullet_squiggly",
         ImageType::EnemyBulletSquiggly,
-        Color::YELLOW,
+        Color::Yellow,
     );
     all_image_list.ret_image_data(
         "enemy_bullet_plunger",
         ImageType::EnemyBulletPlunger,
-        Color::YELLOW,
+        Color::Yellow,
     );
     all_image_list.ret_image_data(
         "enemy_bullet_rolling",
         ImageType::EnemyBulletRolling,
-        Color::YELLOW,
+        Color::Yellow,
     );
     all_image_list.ret_image_data(
         "enemy_bullet_explosion",
         ImageType::EnemyBulletExplosionFront,
-        Color::RED,
+        Color::Red,
     );
     all_image_list.ret_image_data(
         "enemy_bullet_explosion",
         ImageType::EnemyBulletExplosionShadow,
-        Color::BACKGROUND,
+        Color::Background,
     );
     (
         all_image_list.image_data_list,

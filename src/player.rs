@@ -92,7 +92,7 @@ impl Bullet {
                 let left_collision = pixel_ctrl::detect_pixel_diff(
                     canvas_width,
                     left_pos,
-                    Color::RED,
+                    Color::Red,
                     ctx.get_image_data(0., 0., canvas_width, self.pos.y + self.height)
                         .unwrap(),
                 );
@@ -101,7 +101,7 @@ impl Bullet {
                 let right_collision = pixel_ctrl::detect_pixel_diff(
                     canvas_width,
                     right_pos,
-                    Color::RED,
+                    Color::Red,
                     ctx.get_image_data(0., 0., canvas_width, self.pos.y + self.height)
                         .unwrap(),
                 );

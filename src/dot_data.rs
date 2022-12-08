@@ -1,12 +1,12 @@
 use std::io::Write;
 
 pub enum Color {
-    TURQUOISE,  // 青緑色
-    PURPLE,     // 紫色
-    GREEN,      // 緑色
-    RED,        // 赤色
-    YELLOW,     //黄色
-    BACKGROUND, // 背景色
+    Turquoise,  // 青緑色
+    Purple,     // 紫色
+    Green,      // 緑色
+    Red,        // 赤色
+    Yellow,     //黄色
+    Background, // 背景色
 }
 pub struct DotShape {
     pub width: u32,              // 幅[ドット]
@@ -321,11 +321,11 @@ fn convert_dot_map(dot_map: Vec<&str>) -> Vec<Vec<bool>> {
 // 指定した色に対応するrgbaの値を返す
 pub fn set_color(color: Color) -> Vec<u8> {
     match color {
-        Color::TURQUOISE => vec![68, 200, 210, 255], // 青緑色
-        Color::PURPLE => vec![219, 85, 221, 255],    // 紫色
-        Color::GREEN => vec![98, 222, 109, 255],     // 緑色
-        Color::RED => vec![210, 0, 0, 255],          // 赤色
-        Color::YELLOW => vec![190, 180, 80, 255],    //黄色
-        Color::BACKGROUND => vec![0, 0, 0, 255],     // 背景色
+        Color::Turquoise => vec![68, 200, 210, 255], // 青緑色
+        Color::Purple => vec![219, 85, 221, 255],    // 紫色
+        Color::Green => vec![98, 222, 109, 255],     // 緑色
+        Color::Red => vec![210, 0, 0, 255],          // 赤色
+        Color::Yellow => vec![190, 180, 80, 255],    //黄色
+        Color::Background => vec![0, 0, 0, 255],     // 背景色
     }
 }
