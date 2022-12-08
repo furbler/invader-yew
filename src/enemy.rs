@@ -7,6 +7,7 @@ use crate::draw_background_rect;
 use crate::load_image::ImageType;
 use crate::math::Vec2;
 use crate::pixel_ctrl;
+use crate::player;
 
 #[derive(Eq, Hash, PartialEq)]
 enum EnemyType {
@@ -32,58 +33,85 @@ impl Bullet {
         self.live = true;
     }
 
-    fn update(&mut self, ctx: &CanvasRenderingContext2d, canvas_width: f64, canvas_height: f64) {
-        if self.live {
-            self.pos.y += 3.;
-            // 赤線の当たりに着弾した場合
-            if self.pos.y > canvas_height - 52. {
-                // 弾を消す
-                self.live = false;
-                draw_background_rect(
-                    ctx,
-                    self.pre_pos.x - self.width / 2.,
-                    self.pre_pos.y - self.height / 2.,
-                    self.width,
-                    self.height,
-                );
-                self.explosion.pos = self.pos;
-                self.explosion.effect_cnt = Some(20);
-            } else {
-                // トーチカへの着弾確認
-                // とりあえず弾の周りのデータまであれば十分
-                // 弾の中心付近の座標
-                let left_pos = Vec2::new(self.pos.x - self.width / 2. - 2., self.pos.y);
-                let left_collision = pixel_ctrl::detect_pixel_diff(
-                    canvas_width,
-                    left_pos,
-                    Color::RED,
-                    ctx.get_image_data(0., 0., canvas_width, self.pos.y + self.height)
-                        .unwrap(),
-                );
+    fn update(
+        &mut self,
+        ctx: &CanvasRenderingContext2d,
+        canvas_width: f64,
+        canvas_height: f64,
+        player: &mut player::Player,
+    ) {
+        if !self.live {
+            return;
+        }
+        //弾が存在していたら移動する
+        self.pos.y += 3.;
+        // 赤線の当たりに着弾した場合
+        if self.pos.y > canvas_height - 52. {
+            // 弾を消す
+            self.live = false;
+            draw_background_rect(
+                ctx,
+                self.pre_pos.x - self.width / 2.,
+                self.pre_pos.y - self.height / 2.,
+                self.width,
+                self.height,
+            );
+            self.explosion.pos = self.pos;
+            self.explosion.effect_cnt = Some(20);
+            return;
+        }
+        //プレイヤーと衝突した場合
+        if Vec2::new(self.pos.x, self.pos.y - self.height / 2.).collision(
+            &player.pos,
+            player.width,
+            player.height,
+        ) {
+            //プレイヤーを消す
+            player.break_cnt = Some(50);
+            // 弾を消す
+            self.live = false;
+            draw_background_rect(
+                ctx,
+                self.pre_pos.x - self.width / 2.,
+                self.pre_pos.y - self.height / 2.,
+                self.width,
+                self.height,
+            );
+        }
 
-                let right_pos = Vec2::new(self.pos.x + self.width / 2. + 2., self.pos.y);
-                let right_collision = pixel_ctrl::detect_pixel_diff(
-                    canvas_width,
-                    right_pos,
-                    Color::RED,
-                    ctx.get_image_data(0., 0., canvas_width, self.pos.y + self.height)
-                        .unwrap(),
-                );
-                //トーチカに触れていた場合
-                if left_collision || right_collision {
-                    // 弾を消す
-                    self.live = false;
-                    draw_background_rect(
-                        ctx,
-                        self.pre_pos.x - self.width / 2.,
-                        self.pre_pos.y - self.height / 2.,
-                        self.width,
-                        self.height,
-                    );
-                    self.explosion.pos = self.pos;
-                    self.explosion.effect_cnt = Some(20);
-                }
-            }
+        // トーチカへの着弾確認
+        // とりあえず弾の周りのデータまであれば十分
+        // 弾の中心付近の座標
+        let left_pos = Vec2::new(self.pos.x - self.width / 2. - 2., self.pos.y);
+        let left_collision = pixel_ctrl::detect_pixel_diff(
+            canvas_width,
+            left_pos,
+            Color::RED,
+            ctx.get_image_data(0., 0., canvas_width, self.pos.y + self.height)
+                .unwrap(),
+        );
+
+        let right_pos = Vec2::new(self.pos.x + self.width / 2. + 2., self.pos.y);
+        let right_collision = pixel_ctrl::detect_pixel_diff(
+            canvas_width,
+            right_pos,
+            Color::RED,
+            ctx.get_image_data(0., 0., canvas_width, self.pos.y + self.height)
+                .unwrap(),
+        );
+        //トーチカに触れていた場合
+        if left_collision || right_collision {
+            // 弾を消す
+            self.live = false;
+            draw_background_rect(
+                ctx,
+                self.pre_pos.x - self.width / 2.,
+                self.pre_pos.y - self.height / 2.,
+                self.width,
+                self.height,
+            );
+            self.explosion.pos = self.pos;
+            self.explosion.effect_cnt = Some(20);
         }
     }
     fn render(&mut self, ctx: &CanvasRenderingContext2d) {
@@ -164,7 +192,7 @@ impl Explosion {
     fn update_render(
         &mut self,
         ctx: &CanvasRenderingContext2d,
-        player_bullet: &mut crate::player::Bullet,
+        player_bullet: &mut player::Bullet,
     ) {
         // エフェクト表示中であれば
         if let Some(image) = self.show.as_ref() {
@@ -216,7 +244,7 @@ impl Enemy {
     fn update(
         &mut self,
         move_dir: i32,
-        player_bullet: &mut crate::player::Bullet,
+        player_bullet: &mut player::Bullet,
         explosion: &mut Explosion,
     ) {
         if !self.live {
@@ -539,18 +567,18 @@ impl EnemyManage {
         ctx: &CanvasRenderingContext2d,
         canvas_width: f64,
         canvas_height: f64,
-        player_bullet: &mut crate::player::Bullet,
+        player: &mut player::Player,
     ) {
         if let Some(_) = self.explosion.show {
             // 爆発エフェクト表示
-            self.explosion.update_render(ctx, player_bullet);
+            self.explosion.update_render(ctx, &mut player.bullet);
             // 爆発エフェクト表示中は敵の動きをすべて止める
             return;
         }
 
         // 各敵個体の移動処理
         self.enemys_list.iter_mut().for_each(|enemy| {
-            enemy.update(self.move_dir, player_bullet, &mut self.explosion);
+            enemy.update(self.move_dir, &mut player.bullet, &mut self.explosion);
         });
 
         // 移動した敵インベーダーの個体番号を取得
@@ -619,7 +647,7 @@ impl EnemyManage {
                 ));
                 self.shot_interval = 0;
             }
-            bullet.update(ctx, canvas_width, canvas_height);
+            bullet.update(ctx, canvas_width, canvas_height, player);
         }
         self.shot_interval += 1;
     }

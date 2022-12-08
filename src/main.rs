@@ -227,7 +227,7 @@ impl AnimationCanvas {
             .update(&ctx, &self.input_key_down.borrow(), canvas_width);
         // 敵インベーダーの処理
         self.enemy_manage
-            .update(&ctx, canvas_width, canvas_height, &mut self.player.bullet);
+            .update(&ctx, canvas_width, canvas_height, &mut self.player);
         // UFOの処理
         self.ufo.update(&ctx, canvas_width, &mut self.player.bullet);
 

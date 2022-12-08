@@ -73,6 +73,7 @@ impl Bullet {
         ctx: &CanvasRenderingContext2d,
         input_key: &KeyDown,
         player_pos: Vec2,
+        player_broken: Option<i32>,
         canvas_width: f64,
     ) {
         if self.live {
@@ -112,8 +113,8 @@ impl Bullet {
             }
         } else {
             // 弾が削除されている状態でのみ射撃可能
-            // 射撃許可が出ていて、発射ボタンが押されている場合
-            if self.can_shot && input_key.shot {
+            // 射撃許可が出ていて、プレイヤーが破壊されていない状態で発射ボタンが押されている場合
+            if self.can_shot && player_broken == None && input_key.shot {
                 // 弾をプレイヤーの少し上に配置
                 self.pos.x = player_pos.x;
                 self.pos.y = player_pos.y - 24.;
@@ -189,10 +190,11 @@ impl Bullet {
 }
 
 pub struct Player {
-    width: f64,                           // 描画サイズの幅 [pixel]
-    height: f64,                          // 描画サイズの高さ [pixel]
-    pos: Vec2,                            // 移動後の中心位置
+    pub width: f64,                       // 描画サイズの幅 [pixel]
+    pub height: f64,                      // 描画サイズの高さ [pixel]
+    pub pos: Vec2,                        // 移動後の中心位置
     pre_pos: Vec2,                        // 前回描画時の中心位置
+    pub break_cnt: Option<i32>,           //撃破されてから再出撃までのカウント
     pub image_front: Option<ImageBitmap>, // 表画像
     pub bullet: Bullet,                   // 持ち弾(1発のみ)
 }
@@ -205,6 +207,7 @@ impl Player {
             height: 0.,
             pos: Vec2 { x: 0., y: 0. },
             pre_pos: Vec2 { x: 0., y: 0. },
+            break_cnt: None,
             image_front: None,
             bullet: Bullet::empty(),
         }
@@ -222,6 +225,7 @@ impl Player {
             pos,
             pre_pos: pos,
             image_front: Some(image_front),
+            break_cnt: None,
             bullet: Bullet::new_image(
                 image_bullet_front,
                 image_land_bullet_front,
@@ -235,6 +239,32 @@ impl Player {
         input_key: &KeyDown,
         canvas_width: f64,
     ) {
+        //プレイヤーが撃破されてから一定時間
+        if let Some(cnt) = self.break_cnt {
+            if cnt < 0 {
+                //一定時間経過したら復活
+                self.break_cnt = None;
+                self.pos.x = 100.;
+                return;
+            }
+            if cnt == 50 {
+                //消えた直後
+                draw_background_rect(
+                    ctx,
+                    self.pre_pos.x - self.width / 2.,
+                    self.pre_pos.y - self.height / 2.,
+                    self.width,
+                    self.height,
+                );
+            }
+            //カウントを進める
+            self.break_cnt = Some(cnt - 1);
+
+            self.bullet
+                .update(ctx, input_key, self.pos, self.break_cnt, canvas_width);
+
+            return;
+        }
         // 一回(1フレーム)の移動距離
         let distance = 3.5;
         if input_key.left && 0. < self.pos.x - self.width / 2. - distance {
@@ -244,9 +274,14 @@ impl Player {
             self.pos.x += distance;
         }
 
-        self.bullet.update(ctx, input_key, self.pos, canvas_width);
+        self.bullet
+            .update(ctx, input_key, self.pos, self.break_cnt, canvas_width);
     }
     pub fn render(&mut self, ctx: &CanvasRenderingContext2d) {
+        if let Some(_) = self.break_cnt {
+            self.bullet.render(ctx);
+            return;
+        }
         // 影画像(前回の部分を消す)
         draw_background_rect(
             ctx,
