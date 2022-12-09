@@ -119,6 +119,12 @@ impl Component for AnimationCanvas {
                     ImageType::LandPlayerBulletShadow => {
                         self.player.bullet.image_land_shadow = Some(image_bitmap)
                     }
+                    ImageType::PlayerExplosion1 => {
+                        self.player.image_explosion_1 = Some(image_bitmap)
+                    }
+                    ImageType::PlayerExplosion2 => {
+                        self.player.image_explosion_2 = Some(image_bitmap)
+                    }
                     ImageType::Torchika => self.torchika = Some(image_bitmap),
                     ImageType::Ufo => self.ufo.image = Some(image_bitmap),
                     ImageType::UfoExplosion => self.ufo.explosion.image = Some(image_bitmap),
@@ -148,6 +154,8 @@ impl Component for AnimationCanvas {
                     self.player.bullet.image_front.clone().unwrap(),
                     self.player.bullet.image_land_front.clone().unwrap(),
                     self.player.bullet.image_land_shadow.clone().unwrap(),
+                    self.player.image_explosion_1.clone().unwrap(),
+                    self.player.image_explosion_2.clone().unwrap(),
                 );
                 self.ufo = Ufo::new(
                     self.ufo.image.clone().unwrap(),

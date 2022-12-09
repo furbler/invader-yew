@@ -66,17 +66,20 @@ impl Bullet {
             player.width,
             player.height,
         ) {
-            //プレイヤーを消す
-            player.break_cnt = Some(50);
-            // 弾を消す
-            self.live = false;
-            draw_background_rect(
-                ctx,
-                self.pre_pos.x - self.width / 2.,
-                self.pre_pos.y - self.height / 2.,
-                self.width,
-                self.height,
-            );
+            //撃破後の状態でなければ
+            if player.break_cnt == None {
+                //プレイヤーを消す
+                player.break_cnt = Some(player.revival_set_cnt);
+                // 弾を消す
+                self.live = false;
+                draw_background_rect(
+                    ctx,
+                    self.pre_pos.x - self.width / 2.,
+                    self.pre_pos.y - self.height / 2.,
+                    self.width,
+                    self.height,
+                );
+            }
         }
 
         // トーチカへの着弾確認

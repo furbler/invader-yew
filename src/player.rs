@@ -194,9 +194,14 @@ pub struct Player {
     pub height: f64,                      // 描画サイズの高さ [pixel]
     pub pos: Vec2,                        // 移動後の中心位置
     pre_pos: Vec2,                        // 前回描画時の中心位置
-    pub break_cnt: Option<i32>,           //撃破されてから再出撃までのカウント
+    pub revival_set_cnt: i32,             //撃破されてから再出撃までのカウント
+    pub break_cnt: Option<i32>,           //再出撃までの残りカウント
     pub image_front: Option<ImageBitmap>, // 表画像
     pub bullet: Bullet,                   // 持ち弾(1発のみ)
+    width_explosion: f64,
+    height_explosion: f64,
+    pub image_explosion_1: Option<ImageBitmap>,
+    pub image_explosion_2: Option<ImageBitmap>,
 }
 
 impl Player {
@@ -207,9 +212,14 @@ impl Player {
             height: 0.,
             pos: Vec2 { x: 0., y: 0. },
             pre_pos: Vec2 { x: 0., y: 0. },
+            revival_set_cnt: 0,
             break_cnt: None,
             image_front: None,
             bullet: Bullet::empty(),
+            width_explosion: 0.,
+            height_explosion: 0.,
+            image_explosion_1: None,
+            image_explosion_2: None,
         }
     }
     pub fn new(
@@ -218,6 +228,8 @@ impl Player {
         image_bullet_front: ImageBitmap,
         image_land_bullet_front: ImageBitmap,
         image_land_bullet_shadow: ImageBitmap,
+        image_explosion_1: ImageBitmap,
+        image_explosion_2: ImageBitmap,
     ) -> Self {
         Player {
             width: image_front.width() as f64 * 3.,
@@ -225,12 +237,17 @@ impl Player {
             pos,
             pre_pos: pos,
             image_front: Some(image_front),
+            revival_set_cnt: 130,
             break_cnt: None,
             bullet: Bullet::new_image(
                 image_bullet_front,
                 image_land_bullet_front,
                 image_land_bullet_shadow,
             ),
+            width_explosion: image_explosion_1.width() as f64 * 3.,
+            height_explosion: image_explosion_1.height() as f64 * 3.,
+            image_explosion_1: Some(image_explosion_1),
+            image_explosion_2: Some(image_explosion_2),
         }
     }
     pub fn update(
@@ -247,14 +264,51 @@ impl Player {
                 self.pos.x = 100.;
                 return;
             }
-            if cnt == 50 {
-                //消えた直後
+            if cnt == self.revival_set_cnt {
+                //撃破直後にプレイヤーを消す
                 draw_background_rect(
                     ctx,
                     self.pre_pos.x - self.width / 2.,
                     self.pre_pos.y - self.height / 2.,
                     self.width,
                     self.height,
+                );
+            }
+            //撃破から一定時間は爆発エフェクトを表示
+            if cnt > self.revival_set_cnt - 50 {
+                //2種類の画像を交互に表示
+                let image_explosion;
+                if (cnt / 5) % 2 == 0 {
+                    image_explosion = &self.image_explosion_1;
+                } else {
+                    image_explosion = &self.image_explosion_2;
+                }
+                ctx.draw_image_with_image_bitmap_and_dw_and_dh(
+                    image_explosion.as_ref().unwrap(),
+                    self.pre_pos.x - self.width_explosion / 2.,
+                    self.pre_pos.y - self.height_explosion / 2.,
+                    self.width_explosion,
+                    self.height_explosion,
+                )
+                .unwrap();
+                //表示画像切替時には消す
+                if cnt % 5 == 0 {
+                    draw_background_rect(
+                        ctx,
+                        self.pre_pos.x - self.width_explosion / 2.,
+                        self.pre_pos.y - self.height_explosion / 2.,
+                        self.width_explosion,
+                        self.height_explosion,
+                    );
+                }
+            } else if cnt == self.revival_set_cnt - 50 {
+                //爆発エフェクトを最後に消す
+                draw_background_rect(
+                    ctx,
+                    self.pre_pos.x - self.width_explosion / 2.,
+                    self.pre_pos.y - self.height_explosion / 2.,
+                    self.width_explosion,
+                    self.height_explosion,
                 );
             }
             //カウントを進める

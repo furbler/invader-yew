@@ -71,6 +71,35 @@ pub fn ret_dot_data(name: &str) -> DotShape {
         height: 6,
         dot_map: convert_dot_map(vec!["#", "#", "#", "#", "#", "#"]),
     };
+    let player_explosion_1 = DotShape {
+        width: 16,
+        height: 8,
+        dot_map: convert_dot_map(vec![
+            "_ _ _ # _ _ _ _ _ _ _ _ _ # _ _",
+            "# _ _ _ _ _ # _ _ _ _ # # _ _ #",
+            "_ _ _ # _ _ _ _ # # _ _ _ _ _ _",
+            "_ _ _ _ _ _ # _ _ _ _ _ _ _ # _",
+            "_ # _ _ # _ # # _ _ # # _ _ _ #",
+            "_ _ # _ _ _ _ # # # _ _ _ # _ _",
+            "_ _ _ # # # # # # # # # _ _ _ _",
+            "_ _ # # _ # # # # # # # _ _ # _",
+        ]),
+    };
+    let player_explosion_2 = DotShape {
+        width: 16,
+        height: 8,
+        dot_map: convert_dot_map(vec![
+            "_ _ _ _ _ # _ _ _ _ _ _ _ _ _ _",
+            "_ _ _ _ _ _ _ _ _ _ # _ _ _ _ _",
+            "_ _ _ _ _ # _ # _ # _ _ _ _ _ _",
+            "_ _ # _ _ # _ _ _ _ _ _ _ _ _ _",
+            "_ _ _ _ _ _ # # _ # # _ _ _ _ _",
+            "# _ _ _ # _ # # _ # _ # _ _ _ _",
+            "_ _ # # # # # # # # _ _ # _ _ _",
+            "_ # # # # # # # # # # _ # _ # _",
+        ]),
+    };
+
     let crab_down = DotShape {
         width: 11,
         height: 8,
@@ -293,6 +322,8 @@ pub fn ret_dot_data(name: &str) -> DotShape {
         "enemy_bullet_plunger" => enemy_bullet_plunger,
         "enemy_bullet_rolling" => enemy_bullet_rolling,
         "enemy_bullet_explosion" => enemy_bullet_explosion,
+        "player_explosion_1" => player_explosion_1,
+        "player_explosion_2" => player_explosion_2,
         _ => panic!(
             "{}のドットマップ取得に失敗しました。プログラムを終了します。",
             name

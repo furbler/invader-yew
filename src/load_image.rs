@@ -30,6 +30,8 @@ pub enum ImageType {
     EnemyBulletRolling,
     EnemyBulletExplosionFront,
     EnemyBulletExplosionShadow,
+    PlayerExplosion1,
+    PlayerExplosion2,
 }
 // すべての画像タイプをまとめて返す
 impl ImageType {
@@ -57,6 +59,8 @@ impl ImageType {
             ImageType::EnemyBulletRolling,
             ImageType::EnemyBulletExplosionFront,
             ImageType::EnemyBulletExplosionShadow,
+            ImageType::PlayerExplosion1,
+            ImageType::PlayerExplosion2,
         ]
     }
 }
@@ -119,6 +123,16 @@ pub fn image_data_collect() -> (HashMap<ImageType, ImageData>, Vec<Vec<u8>>) {
         "enemy_bullet_explosion",
         ImageType::EnemyBulletExplosionShadow,
         Color::Background,
+    );
+    all_image_list.ret_image_data(
+        "player_explosion_1",
+        ImageType::PlayerExplosion1,
+        Color::Red,
+    );
+    all_image_list.ret_image_data(
+        "player_explosion_2",
+        ImageType::PlayerExplosion2,
+        Color::Red,
     );
     (
         all_image_list.image_data_list,
