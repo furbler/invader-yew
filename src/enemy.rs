@@ -575,6 +575,14 @@ impl EnemyManage {
         if let Some(_) = self.explosion.show {
             // 爆発エフェクト表示
             self.explosion.update_render(ctx, &mut player.bullet);
+            //敵弾は動かす
+            for bullet in &mut self.bullets {
+                // 敵が全滅していたら発射しない
+                if self.can_shot_enemy.len() == 0 {
+                    return;
+                }
+                bullet.update(ctx, canvas_width, canvas_height, player);
+            }
             // 爆発エフェクト表示中は敵の動きをすべて止める
             return;
         }

@@ -144,12 +144,12 @@ impl Component for AnimationCanvas {
             // 初期化
             Msg::Initialize => {
                 let canvas: HtmlCanvasElement = self.canvas.cast().unwrap();
-                let (canvas_width, canvas_height) = (canvas.width() as f64, canvas.height() as f64);
+                let canvas_height = canvas.height() as f64;
                 // 敵インベーダーの初期化
                 self.enemy_manage.register_enemys(canvas_height);
                 // プレイヤーの初期化
                 self.player = Player::new(
-                    Vec2::new(canvas_width / 2., canvas_height - 90.),
+                    Vec2::new(100., canvas_height - 90.),
                     self.player.image_front.clone().unwrap(),
                     self.player.bullet.image_front.clone().unwrap(),
                     self.player.bullet.image_land_front.clone().unwrap(),
