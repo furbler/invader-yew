@@ -267,6 +267,14 @@ impl Enemy {
                 // プレイヤーの弾を消す
                 player_bullet.live = false;
                 player_bullet.remove = Some(player_bullet.pre_pos);
+                //点数を追加
+                player_bullet.score.sum += {
+                    match self.enemy_type {
+                        EnemyType::Octopus => 10,
+                        EnemyType::Crab => 20,
+                        EnemyType::Squid => 30,
+                    }
+                };
                 // 爆発エフェクトを生成
                 explosion.create_effect(
                     self.pos,
@@ -649,7 +657,7 @@ impl EnemyManage {
                 return;
             }
             //弾が消滅済みで、かつ前回の射撃から(3発の弾共通で)一定時間経過して、かつ弾の爆発エフェクト表示が終了していた場合
-            if !bullet.live && self.shot_interval > 30 && bullet.explosion.effect_cnt == None {
+            if !bullet.live && self.shot_interval > 70 && bullet.explosion.effect_cnt == None {
                 //疑似乱数で発射タイミングを決定(ここの発射タイミングのプログラムはあとで変える)
                 let index = self.can_shot_enemy[self.shot_interval % self.can_shot_enemy.len()];
                 bullet.set(Vec2::new(

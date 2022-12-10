@@ -3,18 +3,51 @@ use crate::draw_background_rect;
 use crate::input::KeyDown;
 use crate::math::Vec2;
 use crate::pixel_ctrl;
+use wasm_bindgen::JsValue;
 use web_sys::CanvasRenderingContext2d;
 use web_sys::ImageBitmap;
+//獲得点数
+pub struct Score {
+    pos: Vec2, //点数の表示位置
+    //表示領域の大きさ
+    width: f64,
+    height: f64,
+    pub sum: usize, //獲得点数
+}
+
+impl Score {
+    fn render(&self, ctx: &CanvasRenderingContext2d) {
+        ctx.set_fill_style(&JsValue::from("rgb(100,100,100)"));
+        //文字は下にはみだしやすいため、少し下まで覆う
+        draw_background_rect(
+            ctx,
+            self.pos.x - self.width / 2.,
+            self.pos.y - self.height / 2.,
+            self.width,
+            self.height + 3.,
+        );
+        ctx.set_font(&format!("{}px monospace", self.height));
+        ctx.set_fill_style(&JsValue::from("rgba(255, 255, 255)"));
+        //5桁右詰めで表示
+        ctx.fill_text(
+            &format!("{:0>5}", self.sum),
+            self.pos.x - self.width / 2.,
+            self.pos.y + self.height / 2.,
+        )
+        .unwrap();
+    }
+}
 
 pub struct Bullet {
-    pub width: f64,                       // 描画サイズの幅 [pixel]
-    pub height: f64,                      // 描画サイズの高さ [pixel]
-    pub pos: Vec2,                        // 移動後の中心位置
-    pub pre_pos: Vec2,                    // 前回描画時の中心位置
-    pub live: bool,                       // 弾が画面中に存在しているか否か
-    pub can_shot: bool,                   // 射撃可能ならば真
-    land_effect_cnt: Option<i32>,         // エフェクト表示の残りカウント
-    pub remove: Option<Vec2>, // 削除する際に残った描画を消す処理が必要であればSome(位置)で表す
+    pub width: f64,               // 描画サイズの幅 [pixel]
+    pub height: f64,              // 描画サイズの高さ [pixel]
+    pub pos: Vec2,                // 移動後の中心位置
+    pub pre_pos: Vec2,            // 前回描画時の中心位置
+    pub live: bool,               // 弾が画面中に存在しているか否か
+    pub can_shot: bool,           // 射撃可能ならば真
+    land_effect_cnt: Option<i32>, // エフェクト表示の残りカウント
+    pub remove: Option<Vec2>,     // 削除する際に残った描画を消す処理が必要であればSome(位置)で表す
+    pub score: Score,
     pub image_front: Option<ImageBitmap>, // 表画像
     width_land_effect: f64,
     height_land_effect: f64,
@@ -32,6 +65,12 @@ impl Bullet {
             can_shot: true,
             remove: None,
             land_effect_cnt: None,
+            score: Score {
+                pos: Vec2::new(0., 0.),
+                sum: 0,
+                width: 0.,
+                height: 0.,
+            },
             width_land_effect: 0.,
             height_land_effect: 0.,
             image_front: None,
@@ -55,6 +94,12 @@ impl Bullet {
             width_land_effect: image_land_front.width() as f64 * 2.5,
             height_land_effect: image_land_front.height() as f64 * 2.5,
             remove: None,
+            score: Score {
+                pos: Vec2::new(170., 30.),
+                sum: 0,
+                width: 100.,
+                height: 30.,
+            },
             image_front: Some(image_front),
             image_land_front: Some(image_land_front),
             image_land_shadow: Some(image_land_shadow),
@@ -332,6 +377,8 @@ impl Player {
             .update(ctx, input_key, self.pos, self.break_cnt, canvas_width);
     }
     pub fn render(&mut self, ctx: &CanvasRenderingContext2d) {
+        //点数は常に表示する
+        self.bullet.score.render(ctx);
         if let Some(_) = self.break_cnt {
             self.bullet.render(ctx);
             return;

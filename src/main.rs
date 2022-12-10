@@ -192,7 +192,7 @@ impl Component for AnimationCanvas {
 impl AnimationCanvas {
     fn main_loop(&mut self) {
         let canvas: HtmlCanvasElement = self.canvas.cast().unwrap();
-        let ctx: CanvasRenderingContext2d =
+        let mut ctx: CanvasRenderingContext2d =
             canvas.get_context("2d").unwrap().unwrap().unchecked_into();
         let (canvas_width, canvas_height) = (canvas.width() as f64, canvas.height() as f64);
         ctx.set_global_alpha(1.);
