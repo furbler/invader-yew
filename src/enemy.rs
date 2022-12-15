@@ -248,6 +248,7 @@ impl Enemy {
     fn update(
         &mut self,
         move_dir: i32,
+        move_down: bool,
         player_bullet: &mut player::Bullet,
         explosion: &mut Explosion,
     ) {
@@ -291,6 +292,9 @@ impl Enemy {
         if self.move_turn {
             // 方向を考慮して動く
             self.pos.x += 10. * move_dir as f64;
+            if move_down {
+                self.pos.y += 34.;
+            }
             // 表示する画像を切り替える
             self.show_image_type = !self.show_image_type
         }
@@ -350,6 +354,8 @@ pub struct EnemyManage {
     move_dir: i32,
     // 次フレームで移動方向を反転すべきか否か
     move_dir_invert: bool,
+    // 移動方向反転時
+    move_down: bool,
     // 種類に対応した画像を保存
     pub images_list: HashMap<ImageType, ImageBitmap>,
     // 敵一覧
@@ -373,6 +379,7 @@ impl EnemyManage {
             right_border: 730.,
             move_dir: 1,
             move_dir_invert: false,
+            move_down: false,
             images_list: HashMap::new(),
             enemys_list: Vec::new(),
             explosion: Explosion {
@@ -385,7 +392,6 @@ impl EnemyManage {
                 shadow: None,
             },
             bullets: Vec::new(),
-            // vec![0..11];
             can_shot_enemy: core::array::from_fn::<usize, 11, _>(|i| i).to_vec(),
             shot_interval: 0,
             play_sound_index: 0,
@@ -602,7 +608,12 @@ impl EnemyManage {
 
         // 各敵個体の移動処理
         self.enemys_list.iter_mut().for_each(|enemy| {
-            enemy.update(self.move_dir, &mut player.bullet, &mut self.explosion);
+            enemy.update(
+                self.move_dir,
+                self.move_down,
+                &mut player.bullet,
+                &mut self.explosion,
+            );
         });
 
         // 移動した敵インベーダーの個体番号を取得
@@ -638,6 +649,11 @@ impl EnemyManage {
                 self.move_dir *= -1;
                 // 移動方向反転フラグをリセット
                 self.move_dir_invert = false;
+                // 下へ移動する
+                self.move_down = true;
+            } else {
+                // すべての個体が下への移動を終えた場合
+                self.move_down = false;
             }
             // もう一週生きている個体を探す
             for (index, enemy) in self.enemys_list.iter().enumerate() {
