@@ -8,6 +8,7 @@ use crate::load_image::ImageType;
 use crate::math::Vec2;
 use crate::pixel_ctrl;
 use crate::player;
+use crate::sound::Audio;
 
 #[derive(Eq, Hash, PartialEq)]
 enum EnemyType {
@@ -361,6 +362,8 @@ pub struct EnemyManage {
     can_shot_enemy: Vec<usize>,
     //射撃してからのフレーム数
     shot_interval: usize,
+    // 前回再生した音番号
+    play_sound_index: usize,
 }
 
 impl EnemyManage {
@@ -385,6 +388,7 @@ impl EnemyManage {
             // vec![0..11];
             can_shot_enemy: core::array::from_fn::<usize, 11, _>(|i| i).to_vec(),
             shot_interval: 0,
+            play_sound_index: 0,
         }
     }
     pub fn register_enemys(&mut self, canvas_height: f64) {
@@ -579,6 +583,7 @@ impl EnemyManage {
         canvas_width: f64,
         canvas_height: f64,
         player: &mut player::Player,
+        audio: &Audio,
     ) {
         if let Some(_) = self.explosion.show {
             // 爆発エフェクト表示
@@ -640,6 +645,19 @@ impl EnemyManage {
                     next_move_enemy_index = Some(index);
                     break;
                 }
+            }
+            // サウンドが保存されていれば
+            if audio.invader_move.len() > 0 {
+                // 順番にループ
+                self.play_sound_index = if self.play_sound_index >= audio.invader_move.len() {
+                    0
+                } else {
+                    self.play_sound_index
+                };
+                audio
+                    .play_once_sound(&audio.invader_move[self.play_sound_index])
+                    .unwrap();
+                self.play_sound_index += 1;
             }
         }
         if let Some(i) = next_move_enemy_index {

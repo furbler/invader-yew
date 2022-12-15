@@ -12,6 +12,8 @@ wasm-bindgen-futures = "0.4.33"
 log = "0.4.17"
 wasm-logger = "0.2.0"
 instant = { version = "0.1", features = [ "wasm-bindgen", "inaccurate" ] }
+js-sys = "0.3.60"
+anyhow = "1.0.66"
 
 [dependencies.web-sys]
 version = "0.3.60"
@@ -20,4 +22,9 @@ features = [
   "HtmlCanvasElement",
   "ImageData",
   "ImageBitmap",
+    "Response",
+  "AudioContext",
+  "AudioBuffer",
+"AudioBufferSourceNode",
+"AudioDestinationNode",
 ]

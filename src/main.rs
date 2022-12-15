@@ -10,6 +10,7 @@ use enemy::*;
 use load_image::ImageType;
 use math::Vec2;
 use player::Player;
+use sound::Audio;
 use ufo::Ufo;
 
 mod dot_data;
@@ -19,6 +20,7 @@ mod load_image;
 mod math;
 mod pixel_ctrl;
 mod player;
+mod sound;
 mod ufo;
 
 pub enum Msg {
@@ -31,6 +33,8 @@ pub enum Msg {
         Vec<Vec<u8>>,
         (ImageType, ImageBitmap),
     ),
+    RetAudio,
+    RegisterAudio(Audio),
     Initialize,
     MainLoop,
 }
@@ -41,6 +45,7 @@ struct AnimationCanvas {
     enemy_manage: EnemyManage,
     torchika: Option<ImageBitmap>,
     ufo: Ufo,
+    audio: Audio,
     callback: Closure<dyn FnMut()>,
     input_key_down: Rc<RefCell<input::KeyDown>>,
     need_to_screen_init: bool, // 真ならば画面全体の初期化が必要
@@ -69,6 +74,7 @@ impl Component for AnimationCanvas {
             torchika: None,
             callback,
             ufo: Ufo::empty(),
+            audio: Audio::new(),
             input_key_down: Rc::new(RefCell::new(input::KeyDown {
                 left: false,
                 right: false,
@@ -172,18 +178,34 @@ impl Component for AnimationCanvas {
                 self.main_loop();
                 false
             }
+            // 音データを取得
+            Msg::RetAudio => {
+                if self.audio.invader_move.len() == 0 {
+                    ctx.link()
+                        .send_future(async { Msg::RegisterAudio(sound::ret_audio().await) });
+                }
+                false
+            }
+            // 音データを保存
+            Msg::RegisterAudio(audio) => {
+                self.audio = audio;
+                false
+            }
         }
     }
 
-    fn view(&self, _ctx: &Context<Self>) -> Html {
+    fn view(&self, ctx: &Context<Self>) -> Html {
         html! {
             <div>
             // キャンバスのサイズはここで指定
                 <canvas
                     id="canvas"
                     width="800" height="600"
-                    ref={self.canvas.clone()}
-                    />
+                    ref={self.canvas.clone()}/>
+                // ボタンを押すことで音が再生可能になる
+                <div class="audio-buttons">
+                    <button class="audio-button" onclick={ctx.link().callback(|_| Msg::RetAudio)}>{ "Enable Audio" }</button>
+                </div>
             </div>
         }
     }
@@ -192,7 +214,7 @@ impl Component for AnimationCanvas {
 impl AnimationCanvas {
     fn main_loop(&mut self) {
         let canvas: HtmlCanvasElement = self.canvas.cast().unwrap();
-        let mut ctx: CanvasRenderingContext2d =
+        let ctx: CanvasRenderingContext2d =
             canvas.get_context("2d").unwrap().unwrap().unchecked_into();
         let (canvas_width, canvas_height) = (canvas.width() as f64, canvas.height() as f64);
         ctx.set_global_alpha(1.);
@@ -234,8 +256,13 @@ impl AnimationCanvas {
         self.player
             .update(&ctx, &self.input_key_down.borrow(), canvas_width);
         // 敵インベーダーの処理
-        self.enemy_manage
-            .update(&ctx, canvas_width, canvas_height, &mut self.player);
+        self.enemy_manage.update(
+            &ctx,
+            canvas_width,
+            canvas_height,
+            &mut self.player,
+            &self.audio,
+        );
         // UFOの処理
         self.ufo.update(&ctx, canvas_width, &mut self.player.bullet);
 

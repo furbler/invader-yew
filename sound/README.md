@@ -1,0 +1,2 @@
+The audio files in this sound directory are from the following site.
+[Space Invaders | Resources, Images and Material from the Classic Arcade Game](https://www.classicgaming.cc/classics/space-invaders/sounds)
