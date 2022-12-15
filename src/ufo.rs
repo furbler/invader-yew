@@ -1,7 +1,9 @@
 use crate::draw_background_rect;
 use crate::math::Vec2;
 use crate::player;
+use crate::sound::Audio;
 use instant::Instant;
+use web_sys::AudioBufferSourceNode;
 use web_sys::CanvasRenderingContext2d;
 use web_sys::ImageBitmap;
 
@@ -60,6 +62,7 @@ pub struct Ufo {
     pub explosion: Explosion,
     lapse_time: Instant, // 前回に出現してからの経過時間
     move_dir: i32,       // 移動方向
+    flying_sound: Option<AudioBufferSourceNode>,
 }
 
 impl Ufo {
@@ -81,6 +84,7 @@ impl Ufo {
             },
             lapse_time: Instant::now(),
             move_dir: 0,
+            flying_sound: None,
         }
     }
     pub fn new(image: ImageBitmap, image_explosion: ImageBitmap) -> Self {
@@ -101,6 +105,7 @@ impl Ufo {
             },
             lapse_time: Instant::now(),
             move_dir: -1, // 最初は右から左
+            flying_sound: None,
         }
     }
     fn remove(&mut self, ctx: &CanvasRenderingContext2d) {
@@ -111,6 +116,10 @@ impl Ufo {
         // 方向反転
         self.move_dir *= -1;
         self.pos.x = -10.;
+        // 飛行音のループ再生を止める
+        if let Some(sound_node) = &self.flying_sound {
+            sound_node.stop().unwrap();
+        }
     }
 
     pub fn update(
@@ -118,31 +127,35 @@ impl Ufo {
         ctx: &CanvasRenderingContext2d,
         canvas_width: f64,
         player_bullet: &mut player::Bullet,
+        audio: &Audio,
     ) {
         self.explosion.update(ctx);
         if self.lapse_time.elapsed().as_secs() < 5 {
             // 一定時間経過するまでは何もしない
             return;
         }
-        if player_bullet.live {
-            // 弾と衝突していた場合
-            if player_bullet
+        if player_bullet.live
+            && player_bullet
                 .pos
                 .collision(&self.pos, self.width, self.height)
-            {
-                // UFOの位置に爆発エフェクト生成
-                self.explosion.create_effect(self.pos);
-                // UFOを消す
-                self.remove(ctx);
-                // プレイヤーの弾を消す
-                player_bullet.live = false;
-                player_bullet.remove = Some(player_bullet.pre_pos);
-                player_bullet.can_shot = true;
+        {
+            // 弾と衝突していた場合
+            // UFOの位置に爆発エフェクト生成
+            self.explosion.create_effect(self.pos);
+            // UFOを消す
+            self.remove(ctx);
+            // プレイヤーの弾を消す
+            player_bullet.live = false;
+            player_bullet.remove = Some(player_bullet.pre_pos);
+            player_bullet.can_shot = true;
+            // UFO撃破音再生
+            if let Some(sound) = &audio.ufo_explosion {
+                audio.play_once_sound(sound);
             }
+            return;
         }
-
-        // 出現する瞬間
         if self.pos.x < 0. {
+            // UFOが出現する瞬間
             // 右から左へ動く
             if self.move_dir < 0 {
                 self.pos.x = canvas_width - self.width / 2.;
@@ -151,14 +164,20 @@ impl Ufo {
                 self.pos.x = self.width / 2.;
             }
             self.pre_pos = self.pos;
-        } else {
-            // 移動
-            self.pos.x += 2.5 * self.move_dir as f64;
+            // UFO飛行音ループ再生開始
+            if let Some(sound) = &audio.ufo_flying {
+                self.flying_sound = Some(audio.play_looping_sound(sound));
+            }
+            return;
         }
-        // 外に行った場合
+        // 移動
+        self.pos.x += 2.5 * self.move_dir as f64;
+
+        // 外に出た場合
         if self.pos.x - self.width / 2. < 0. || canvas_width < self.pos.x + self.width / 2. {
             self.remove(ctx);
         }
+
     }
 
     pub fn render(&mut self, ctx: &CanvasRenderingContext2d) {

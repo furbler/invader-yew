@@ -170,7 +170,7 @@ impl Bullet {
                 self.can_shot = false;
                 // 発射音再生
                 if let Some(sound) = &audio.player_shot {
-                    audio.play_once_sound(sound).unwrap();
+                    audio.play_once_sound(sound);
                 }
             }
         }
@@ -327,7 +327,7 @@ impl Player {
                 );
                 // 自機撃破音再生
                 if let Some(sound) = &audio.player_explosion {
-                    audio.play_once_sound(sound).unwrap();
+                    audio.play_once_sound(sound);
                 }
             }
             //撃破から一定時間は爆発エフェクトを表示

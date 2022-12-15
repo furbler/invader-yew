@@ -289,7 +289,7 @@ impl Enemy {
                 );
                 // インベーダー撃破音再生
                 if let Some(sound) = &audio.invader_explosion {
-                    audio.play_once_sound(sound).unwrap();
+                    audio.play_once_sound(sound);
                 }
             }
         }
@@ -676,9 +676,7 @@ impl EnemyManage {
                 } else {
                     self.play_sound_index
                 };
-                audio
-                    .play_once_sound(&audio.invader_move[self.play_sound_index])
-                    .unwrap();
+                audio.play_once_sound(&audio.invader_move[self.play_sound_index]);
                 self.play_sound_index += 1;
             }
         }

@@ -26,6 +26,8 @@ pub async fn ret_audio() -> Audio {
             .await
             .unwrap(),
     );
+    audio.ufo_flying = Some(audio.load_sound("sound/ufo_flying.wav").await.unwrap());
+    audio.ufo_explosion = Some(audio.load_sound("sound/ufo_explosion.wav").await.unwrap());
 
     audio
 }
@@ -37,6 +39,8 @@ pub struct Audio {
     pub player_shot: Option<Sound>,
     pub invader_explosion: Option<Sound>,
     pub player_explosion: Option<Sound>,
+    pub ufo_flying: Option<Sound>,
+    pub ufo_explosion: Option<Sound>,
 }
 
 impl Audio {
@@ -47,6 +51,8 @@ impl Audio {
             player_shot: None,
             invader_explosion: None,
             player_explosion: None,
+            ufo_flying: None,
+            ufo_explosion: None,
         }
     }
     // ファイル名からサウンドを取得
@@ -60,22 +66,24 @@ impl Audio {
         })
     }
     //サウンドを一度だけ再生
-    pub fn play_once_sound(&self, sound: &Sound) -> Result<(), anyhow::Error> {
-        self.play_sound(&sound.buffer, false)
+    pub fn play_once_sound(&self, sound: &Sound) {
+        self.play_sound(&sound.buffer, false);
     }
     //サウンドをループ再生
-    pub fn play_looping_sound(&self, sound: &Sound) -> Result<(), anyhow::Error> {
+    pub fn play_looping_sound(&self, sound: &Sound) -> AudioBufferSourceNode {
         self.play_sound(&sound.buffer, true)
     }
 
-    fn play_sound(&self, buffer: &AudioBuffer, looping: bool) -> anyhow::Result<()> {
-        let track_source = create_track_source(&self.context, buffer)?;
+    fn play_sound(&self, buffer: &AudioBuffer, looping: bool) -> AudioBufferSourceNode {
+        let track_source = create_track_source(&self.context, buffer).unwrap();
         if looping {
             track_source.set_loop(true);
         }
         track_source
             .start()
-            .map_err(|err| anyhow!("Could not start sound! {:#?}", err))
+            .map_err(|err| log::info!("Could not start sound! {:#?}", err))
+            .unwrap();
+        track_source
     }
 }
 
