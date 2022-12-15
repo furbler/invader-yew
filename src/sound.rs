@@ -7,19 +7,25 @@ use web_sys::{
     Response,
 };
 
-// pub struct SoundList {}
-
 //サウンドを取得
 pub async fn ret_audio() -> Audio {
     let mut audio = Audio::new();
     let mut se = Vec::new();
-    // 再生する順番に保存する
+    // インベーダーの移動音は再生する順番に保存する
     se.push(audio.load_sound("sound/fastinvader1.wav").await.unwrap());
     se.push(audio.load_sound("sound/fastinvader2.wav").await.unwrap());
     se.push(audio.load_sound("sound/fastinvader3.wav").await.unwrap());
     se.push(audio.load_sound("sound/fastinvader4.wav").await.unwrap());
-
     audio.invader_move = se;
+
+    audio.player_shot = Some(audio.load_sound("sound/shoot.wav").await.unwrap());
+    audio.invader_explosion = Some(audio.load_sound("sound/invader_killed.wav").await.unwrap());
+    audio.player_explosion = Some(
+        audio
+            .load_sound("sound/player_explosion.wav")
+            .await
+            .unwrap(),
+    );
 
     audio
 }
@@ -28,6 +34,9 @@ pub async fn ret_audio() -> Audio {
 pub struct Audio {
     context: AudioContext,
     pub invader_move: Vec<Sound>,
+    pub player_shot: Option<Sound>,
+    pub invader_explosion: Option<Sound>,
+    pub player_explosion: Option<Sound>,
 }
 
 impl Audio {
@@ -35,6 +44,9 @@ impl Audio {
         Audio {
             context: create_audio_context().unwrap(),
             invader_move: Vec::new(),
+            player_shot: None,
+            invader_explosion: None,
+            player_explosion: None,
         }
     }
     // ファイル名からサウンドを取得

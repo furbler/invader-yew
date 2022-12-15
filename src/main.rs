@@ -66,6 +66,7 @@ impl Component for AnimationCanvas {
         let callback = Closure::wrap(
             Box::new(move || comp_ctx.send_message(Msg::MainLoop)) as Box<dyn FnMut()>
         );
+
         Self {
             canvas: NodeRef::default(),
             // まだ画像が未取得なので、仮の値を入れる
@@ -200,7 +201,7 @@ impl Component for AnimationCanvas {
             // キャンバスのサイズはここで指定
                 <canvas
                     id="canvas"
-                    width="800" height="600"
+                    width="700" height="600"
                     ref={self.canvas.clone()}/>
                 // ボタンを押すことで音が再生可能になる
                 <div class="audio-buttons">
@@ -253,8 +254,12 @@ impl AnimationCanvas {
         ctx.set_image_smoothing_enabled(false);
 
         // プレイヤーの処理
-        self.player
-            .update(&ctx, &self.input_key_down.borrow(), canvas_width);
+        self.player.update(
+            &ctx,
+            &self.input_key_down.borrow(),
+            canvas_width,
+            &self.audio,
+        );
         // 敵インベーダーの処理
         self.enemy_manage.update(
             &ctx,

@@ -251,6 +251,7 @@ impl Enemy {
         move_down: bool,
         player_bullet: &mut player::Bullet,
         explosion: &mut Explosion,
+        audio: &Audio,
     ) {
         if !self.live {
             // 死んでいたら何もしない
@@ -286,6 +287,10 @@ impl Enemy {
                         .unwrap()
                         .clone(),
                 );
+                // インベーダー撃破音再生
+                if let Some(sound) = &audio.invader_explosion {
+                    audio.play_once_sound(sound).unwrap();
+                }
             }
         }
         // 動く時
@@ -293,7 +298,7 @@ impl Enemy {
             // 方向を考慮して動く
             self.pos.x += 10. * move_dir as f64;
             if move_down {
-                self.pos.y += 34.;
+                self.pos.y += 23.;
             }
             // 表示する画像を切り替える
             self.show_image_type = !self.show_image_type
@@ -376,7 +381,7 @@ impl EnemyManage {
     pub fn default() -> Self {
         EnemyManage {
             left_border: 50.,
-            right_border: 730.,
+            right_border: 650.,
             move_dir: 1,
             move_dir_invert: false,
             move_down: false,
@@ -613,6 +618,7 @@ impl EnemyManage {
                 self.move_down,
                 &mut player.bullet,
                 &mut self.explosion,
+                audio,
             );
         });
 

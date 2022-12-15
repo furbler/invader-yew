@@ -3,6 +3,7 @@ use crate::draw_background_rect;
 use crate::input::KeyDown;
 use crate::math::Vec2;
 use crate::pixel_ctrl;
+use crate::sound::Audio;
 use wasm_bindgen::JsValue;
 use web_sys::CanvasRenderingContext2d;
 use web_sys::ImageBitmap;
@@ -120,6 +121,7 @@ impl Bullet {
         player_pos: Vec2,
         player_broken: Option<i32>,
         canvas_width: f64,
+        audio: &Audio,
     ) {
         if self.live {
             // 弾が生きていたら更新処理を行う
@@ -166,6 +168,10 @@ impl Bullet {
                 self.live = true;
                 // 消えるまで射撃禁止
                 self.can_shot = false;
+                // 発射音再生
+                if let Some(sound) = &audio.player_shot {
+                    audio.play_once_sound(sound).unwrap();
+                }
             }
         }
     }
@@ -300,6 +306,7 @@ impl Player {
         ctx: &CanvasRenderingContext2d,
         input_key: &KeyDown,
         canvas_width: f64,
+        audio: &Audio,
     ) {
         //プレイヤーが撃破されてから一定時間
         if let Some(cnt) = self.break_cnt {
@@ -318,6 +325,10 @@ impl Player {
                     self.width,
                     self.height,
                 );
+                // 自機撃破音再生
+                if let Some(sound) = &audio.player_explosion {
+                    audio.play_once_sound(sound).unwrap();
+                }
             }
             //撃破から一定時間は爆発エフェクトを表示
             if cnt > self.revival_set_cnt - 50 {
@@ -359,8 +370,14 @@ impl Player {
             //カウントを進める
             self.break_cnt = Some(cnt - 1);
 
-            self.bullet
-                .update(ctx, input_key, self.pos, self.break_cnt, canvas_width);
+            self.bullet.update(
+                ctx,
+                input_key,
+                self.pos,
+                self.break_cnt,
+                canvas_width,
+                audio,
+            );
 
             return;
         }
@@ -373,8 +390,14 @@ impl Player {
             self.pos.x += distance;
         }
 
-        self.bullet
-            .update(ctx, input_key, self.pos, self.break_cnt, canvas_width);
+        self.bullet.update(
+            ctx,
+            input_key,
+            self.pos,
+            self.break_cnt,
+            canvas_width,
+            audio,
+        );
     }
     pub fn render(&mut self, ctx: &CanvasRenderingContext2d) {
         //点数は常に表示する
