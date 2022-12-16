@@ -63,6 +63,7 @@ pub struct Ufo {
     lapse_time: Instant, // 前回に出現してからの経過時間
     move_dir: i32,       // 移動方向
     flying_sound: Option<AudioBufferSourceNode>,
+    score_table: [usize; 15], // 獲得得点の表(プレイヤーの発射数の合計で決める)
 }
 
 impl Ufo {
@@ -85,6 +86,7 @@ impl Ufo {
             lapse_time: Instant::now(),
             move_dir: 0,
             flying_sound: None,
+            score_table: [0; 15],
         }
     }
     pub fn new(image: ImageBitmap, image_explosion: ImageBitmap) -> Self {
@@ -106,6 +108,9 @@ impl Ufo {
             lapse_time: Instant::now(),
             move_dir: -1, // 最初は右から左
             flying_sound: None,
+            score_table: [
+                50, 50, 100, 150, 100, 100, 50, 300, 100, 100, 100, 50, 150, 100, 100,
+            ],
         }
     }
     fn remove(&mut self, ctx: &CanvasRenderingContext2d) {
@@ -148,6 +153,8 @@ impl Ufo {
             player_bullet.live = false;
             player_bullet.remove = Some(player_bullet.pre_pos);
             player_bullet.can_shot = true;
+            // 表を参考に点数を加算
+            player_bullet.score.sum += self.score_table[player_bullet.shot_cnt as usize % 15];
             // UFO撃破音再生
             if let Some(sound) = &audio.ufo_explosion {
                 audio.play_once_sound(sound);
@@ -177,7 +184,6 @@ impl Ufo {
         if self.pos.x - self.width / 2. < 0. || canvas_width < self.pos.x + self.width / 2. {
             self.remove(ctx);
         }
-
     }
 
     pub fn render(&mut self, ctx: &CanvasRenderingContext2d) {

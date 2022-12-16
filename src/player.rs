@@ -46,8 +46,9 @@ pub struct Bullet {
     pub pre_pos: Vec2,            // 前回描画時の中心位置
     pub live: bool,               // 弾が画面中に存在しているか否か
     pub can_shot: bool,           // 射撃可能ならば真
+    pub shot_cnt: i32, // ステージ開始からの累計射撃数(1発目を0とするため、実際より-1される)
     land_effect_cnt: Option<i32>, // エフェクト表示の残りカウント
-    pub remove: Option<Vec2>,     // 削除する際に残った描画を消す処理が必要であればSome(位置)で表す
+    pub remove: Option<Vec2>, // 削除する際に残った描画を消す処理が必要であればSome(位置)で表す
     pub score: Score,
     pub image_front: Option<ImageBitmap>, // 表画像
     width_land_effect: f64,
@@ -64,6 +65,7 @@ impl Bullet {
             pre_pos: Vec2::new(0., 0.),
             live: false,
             can_shot: true,
+            shot_cnt: -1,
             remove: None,
             land_effect_cnt: None,
             score: Score {
@@ -94,6 +96,7 @@ impl Bullet {
             land_effect_cnt: None,
             width_land_effect: image_land_front.width() as f64 * 2.5,
             height_land_effect: image_land_front.height() as f64 * 2.5,
+            shot_cnt: -1, // 1発目を0にするため
             remove: None,
             score: Score {
                 pos: Vec2::new(170., 30.),
@@ -166,6 +169,7 @@ impl Bullet {
                 self.pos.x = player_pos.x;
                 self.pos.y = player_pos.y - 24.;
                 self.live = true;
+                self.shot_cnt += 1;
                 // 消えるまで射撃禁止
                 self.can_shot = false;
                 // 発射音再生
