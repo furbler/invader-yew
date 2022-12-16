@@ -239,6 +239,8 @@ impl AnimationCanvas {
             canvas.get_context("2d").unwrap().unwrap().unchecked_into();
         let (canvas_width, canvas_height) = (canvas.width() as f64, canvas.height() as f64);
         ctx.set_global_alpha(1.);
+        // 画像のぼやけを防ぐ
+        ctx.set_image_smoothing_enabled(false);
         // 画面全体の初期化
         if self.need_to_screen_init {
             ctx.set_fill_style(&JsValue::from("rgb(0,0,0)"));
@@ -270,8 +272,6 @@ impl AnimationCanvas {
             // 初期化は最初のみ
             self.need_to_screen_init = false;
         }
-        // 画像のぼやけを防ぐ
-        ctx.set_image_smoothing_enabled(false);
 
         // プレイヤーの処理
         self.player.update(
@@ -321,7 +321,7 @@ fn main() {
 // 指定した範囲を背景色で塗りつぶす
 fn draw_background_rect(ctx: &CanvasRenderingContext2d, x: f64, y: f64, width: f64, height: f64) {
     ctx.set_fill_style(&JsValue::from("rgb(0,0,0)"));
-    // firefox以外のブラウザで、画像描画範囲に対し塗りつぶし範囲が僅かに斜めしたにずれる
+    // firefox以外のブラウザで、画像描画範囲に対し塗りつぶし範囲が僅かに斜め下にずれる
     // その対策として、+x軸、-y軸方向にそれぞれ塗りつぶし範囲を1pixel増やす
     ctx.fill_rect(x, y - 1., width + 1., height + 1.);
 }

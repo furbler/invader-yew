@@ -85,28 +85,18 @@ impl Bullet {
             }
         }
 
-        // トーチカへの着弾確認
+        // トーチカまたはプレイヤーの弾への着弾確認
         // とりあえず弾の周りのデータまであれば十分
-        // 弾の中心付近の座標
         let left_pos = Vec2::new(self.pos.x - self.width / 2. - 2., self.pos.y);
-        let left_collision = pixel_ctrl::detect_pixel_diff(
-            canvas_width,
-            left_pos,
-            Color::Red,
-            ctx.get_image_data(0., 0., canvas_width, self.pos.y + self.height)
-                .unwrap(),
-        );
-
         let right_pos = Vec2::new(self.pos.x + self.width / 2. + 2., self.pos.y);
-        let right_collision = pixel_ctrl::detect_pixel_diff(
+        let collision = pixel_ctrl::detect_pixel_diff(
             canvas_width,
-            right_pos,
-            Color::Red,
+            vec![left_pos, right_pos],
+            vec![Color::PlayerBullet, Color::Red],
             ctx.get_image_data(0., 0., canvas_width, self.pos.y + self.height)
                 .unwrap(),
         );
-        //トーチカに触れていた場合
-        if left_collision || right_collision {
+        if collision {
             // 弾を消す
             self.live = false;
             draw_background_rect(

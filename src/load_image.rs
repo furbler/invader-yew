@@ -77,7 +77,11 @@ pub fn image_data_collect() -> (HashMap<ImageType, ImageData>, Vec<Vec<u8>>) {
     all_image_list.ret_image_data("octopus_close", ImageType::OctopusClose, Color::Purple);
     all_image_list.ret_image_data("squid_open", ImageType::SquidOpen, Color::Green);
     all_image_list.ret_image_data("squid_close", ImageType::SquidClose, Color::Green);
-    all_image_list.ret_image_data("player_bullet", ImageType::PlayerBullet, Color::Turquoise);
+    all_image_list.ret_image_data(
+        "player_bullet",
+        ImageType::PlayerBullet,
+        Color::PlayerBullet,
+    );
 
     all_image_list.ret_image_data("explosion", ImageType::ExplosionTurquoise, Color::Turquoise);
     all_image_list.ret_image_data("explosion", ImageType::ExplosionPurple, Color::Purple);

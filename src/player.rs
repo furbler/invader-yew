@@ -137,26 +137,18 @@ impl Bullet {
             } else {
                 // トーチカへの着弾確認
                 // とりあえず弾の周りのデータまであれば十分
-                // 弾の中心より少し上の座標
-                let left_pos = Vec2::new(self.pos.x - self.width / 2. - 2., self.pos.y);
-                let left_collision = pixel_ctrl::detect_pixel_diff(
+                let left_pos = Vec2::new(self.pos.x - self.width / 2. - 1., self.pos.y);
+                let right_pos = Vec2::new(self.pos.x + self.width / 2. + 1., self.pos.y);
+                // 敵の弾またはトーチカへの当たり判定
+                let center_collision = pixel_ctrl::detect_pixel_diff(
                     canvas_width,
-                    left_pos,
-                    Color::Red,
+                    vec![left_pos, right_pos],
+                    vec![Color::Yellow, Color::Red],
                     ctx.get_image_data(0., 0., canvas_width, self.pos.y + self.height)
                         .unwrap(),
                 );
-
-                let right_pos = Vec2::new(self.pos.x + self.width / 2. + 2., self.pos.y);
-                let right_collision = pixel_ctrl::detect_pixel_diff(
-                    canvas_width,
-                    right_pos,
-                    Color::Red,
-                    ctx.get_image_data(0., 0., canvas_width, self.pos.y + self.height)
-                        .unwrap(),
-                );
-                //トーチカに触れていた場合
-                if left_collision || right_collision {
+                //触れていた場合
+                if center_collision {
                     // 着弾処理
                     self.land_obstacle();
                 }
@@ -296,7 +288,7 @@ impl Player {
             image_front: Some(image_front),
             revival_set_cnt: 130,
             break_cnt: None,
-            life: 5,
+            life: 3,
             bullet: Bullet::new_image(
                 image_bullet_front,
                 image_land_bullet_front,
