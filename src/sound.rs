@@ -59,7 +59,7 @@ impl Audio {
             .await
             .map_err(|err| log::info!("error converting fetch to Response {:#?}", err))?;
         // 音声データ毎にデフォルトの音量を設定
-        let volume: f32 = match filename {
+        let default_volume: f32 = match filename {
             "sound/ufo_flying.wav" | "sound/ufo_explosion.wav" => 0.03,
             "sound/shoot.wav" => 0.1,
             "sound/invader_killed.wav" => 0.1,
@@ -67,7 +67,8 @@ impl Audio {
         };
         Ok(Sound {
             buffer: audio_buffer,
-            volume,
+            default_volume,
+            volume: default_volume,
         })
     }
     //サウンドを一度だけ再生
@@ -104,12 +105,87 @@ impl Audio {
             .unwrap();
         track_source
     }
+    // 音量を初期値に戻す
+    pub fn reset_volume(&mut self) {
+        for invader in self.invader_move.iter_mut() {
+            invader.volume = invader.default_volume;
+        }
+        if let Some(sound) = self.invader_explosion.as_mut() {
+            sound.volume = sound.default_volume;
+        }
+        if let Some(sound) = self.player_shot.as_mut() {
+            sound.volume = sound.default_volume;
+        }
+        if let Some(sound) = self.player_explosion.as_mut() {
+            sound.volume = sound.default_volume;
+        }
+        if let Some(sound) = self.ufo_flying.as_mut() {
+            sound.volume = sound.default_volume;
+        }
+        if let Some(sound) = self.ufo_explosion.as_mut() {
+            sound.volume = sound.default_volume;
+        }
+    }
+    // 音量を上げる
+    pub fn all_volume_up(&mut self) {
+        self.all_volume_change(0.1);
+    }
+    // 音量を下げる
+    pub fn all_volume_down(&mut self) {
+        self.all_volume_change(-0.1);
+    }
+
+    // 値が一定範囲内に収まるように変更する
+    fn all_volume_change(&mut self, diff: f32) {
+        // 最小音量値
+        let min = 0.;
+        // 最大音量値
+        let max = 1.5;
+        for invader in self.invader_move.iter_mut() {
+            let volume = invader.volume + diff;
+            invader.volume = Self::limit_value(volume, min, max);
+        }
+        if let Some(sound) = self.invader_explosion.as_mut() {
+            let volume = sound.volume + diff;
+            sound.volume = Self::limit_value(volume, min, max);
+        }
+        if let Some(sound) = self.player_shot.as_mut() {
+            let volume = sound.volume + diff;
+            sound.volume = Self::limit_value(volume, min, max);
+        }
+        if let Some(sound) = self.player_explosion.as_mut() {
+            let volume = sound.volume + diff;
+            sound.volume = Self::limit_value(volume, min, max);
+        }
+        if let Some(sound) = self.ufo_flying.as_mut() {
+            let volume = sound.volume + diff;
+            sound.volume = Self::limit_value(volume, min, max);
+        }
+        if let Some(sound) = self.ufo_explosion.as_mut() {
+            let volume = sound.volume + diff;
+            sound.volume = Self::limit_value(volume, min, max);
+        }
+    }
+    // 指定した範囲に収めた値を返す
+    fn limit_value(value: f32, min: f32, max: f32) -> f32 {
+        if min > max {
+            log::info!("範囲指定に間違いがあります。");
+            value
+        } else if value < min {
+            min
+        } else if max < value {
+            max
+        } else {
+            value
+        }
+    }
 }
 
 #[derive(Clone)]
 pub struct Sound {
     buffer: AudioBuffer,
-    volume: f32, // 再生時の音量
+    volume: f32,         // 再生時の音量
+    default_volume: f32, // 音量の初期値
 }
 
 async fn fetch_array_buffer(resource: &str) -> Result<ArrayBuffer, JsValue> {

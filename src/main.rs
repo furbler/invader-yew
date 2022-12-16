@@ -35,6 +35,9 @@ pub enum Msg {
     ),
     RetAudio,
     RegisterAudio(Audio),
+    AudioVolumeUp,
+    AudioVolumeDown,
+    AudioVolumeReset,
     Initialize,
     MainLoop,
 }
@@ -192,6 +195,18 @@ impl Component for AnimationCanvas {
                 self.audio = audio;
                 false
             }
+            Msg::AudioVolumeUp => {
+                self.audio.all_volume_up();
+                false
+            }
+            Msg::AudioVolumeDown => {
+                self.audio.all_volume_down();
+                false
+            }
+            Msg::AudioVolumeReset => {
+                self.audio.reset_volume();
+                false
+            }
         }
     }
 
@@ -206,6 +221,11 @@ impl Component for AnimationCanvas {
                 // ボタンを押すことで音が再生可能になる
                 <div class="audio-buttons">
                     <button class="audio-button" onclick={ctx.link().callback(|_| Msg::RetAudio)}>{ "Enable Audio" }</button>
+                </div>
+                <div class="volume-buttons">
+                    <button class="volume-button" onclick={ctx.link().callback(|_| Msg::AudioVolumeUp)}>{ "Volume Up" }</button>
+                    <button class="volume-button" onclick={ctx.link().callback(|_| Msg::AudioVolumeReset)}>{ "Reset Volume" }</button>
+                    <button class="volume-button" onclick={ctx.link().callback(|_| Msg::AudioVolumeDown)}>{ "Volume Down" }</button>
                 </div>
             </div>
         }

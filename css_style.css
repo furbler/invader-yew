@@ -13,3 +13,8 @@ canvas {
     margin-left: auto;
     margin-right: auto
 }
+
+.volume-buttons {
+    display: flex;
+    justify-content: center;
+}
