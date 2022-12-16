@@ -2,10 +2,7 @@ use anyhow::anyhow;
 use js_sys::ArrayBuffer;
 use wasm_bindgen::{JsCast, JsValue};
 use wasm_bindgen_futures::JsFuture;
-use web_sys::{
-    window, AudioBuffer, AudioBufferSourceNode, AudioContext, AudioDestinationNode, AudioNode,
-    Response,
-};
+use web_sys::{window, AudioBuffer, AudioBufferSourceNode, AudioContext, Response};
 
 //サウンドを取得
 pub async fn ret_audio() -> Audio {
@@ -55,30 +52,52 @@ impl Audio {
             ufo_explosion: None,
         }
     }
-    // ファイル名からサウンドを取得
+    // ファイル名から音声データを取得
     pub async fn load_sound(&self, filename: &str) -> Result<Sound, ()> {
         let array_buffer = fetch_array_buffer(filename).await.unwrap();
         let audio_buffer = decode_audio_data(&self.context, &array_buffer)
             .await
             .map_err(|err| log::info!("error converting fetch to Response {:#?}", err))?;
+        // 音声データ毎にデフォルトの音量を設定
+        let volume: f32 = match filename {
+            "sound/ufo_flying.wav" | "sound/ufo_explosion.wav" => 0.03,
+            "sound/shoot.wav" => 0.1,
+            "sound/invader_killed.wav" => 0.1,
+            _ => 0.4,
+        };
         Ok(Sound {
             buffer: audio_buffer,
+            volume,
         })
     }
     //サウンドを一度だけ再生
     pub fn play_once_sound(&self, sound: &Sound) {
-        self.play_sound(&sound.buffer, false);
+        self.play_sound(&sound.buffer, sound.volume, false);
     }
     //サウンドをループ再生
     pub fn play_looping_sound(&self, sound: &Sound) -> AudioBufferSourceNode {
-        self.play_sound(&sound.buffer, true)
+        self.play_sound(&sound.buffer, sound.volume, true)
     }
 
-    fn play_sound(&self, buffer: &AudioBuffer, looping: bool) -> AudioBufferSourceNode {
-        let track_source = create_track_source(&self.context, buffer).unwrap();
+    fn play_sound(
+        &self,
+        buffer: &AudioBuffer,
+        volume: f32,
+        looping: bool,
+    ) -> AudioBufferSourceNode {
+        let track_source = create_track_source(&self.context, buffer);
+        let gain_node = self.context.create_gain().unwrap();
+        // 音量設定
+        gain_node.gain().set_value(volume);
+        track_source.connect_with_audio_node(&gain_node).unwrap();
+        gain_node
+            .connect_with_audio_node(&self.context.destination())
+            .unwrap();
+        // ループ処理
         if looping {
             track_source.set_loop(true);
         }
+        // 再生
         track_source
             .start()
             .map_err(|err| log::info!("Could not start sound! {:#?}", err))
@@ -90,6 +109,7 @@ impl Audio {
 #[derive(Clone)]
 pub struct Sound {
     buffer: AudioBuffer,
+    volume: f32, // 再生時の音量
 }
 
 async fn fetch_array_buffer(resource: &str) -> Result<ArrayBuffer, JsValue> {
@@ -123,23 +143,10 @@ fn create_buffer_source(ctx: &AudioContext) -> anyhow::Result<AudioBufferSourceN
         .map_err(|err| anyhow!("Error creating buffer source {:#?}", err))
 }
 
-fn connect_with_audio_node(
-    buffer_source: &AudioBufferSourceNode,
-    destination: &AudioDestinationNode,
-) -> anyhow::Result<AudioNode> {
-    buffer_source
-        .connect_with_audio_node(destination)
-        .map_err(|err| anyhow!("Error connecting audio source to destination {:#?}", err))
-}
-
-fn create_track_source(
-    ctx: &AudioContext,
-    buffer: &AudioBuffer,
-) -> anyhow::Result<AudioBufferSourceNode> {
-    let track_source = create_buffer_source(ctx)?;
+fn create_track_source(ctx: &AudioContext, buffer: &AudioBuffer) -> AudioBufferSourceNode {
+    let track_source = create_buffer_source(ctx).unwrap();
     track_source.set_buffer(Some(buffer));
-    connect_with_audio_node(&track_source, &ctx.destination())?;
-    Ok(track_source)
+    track_source
 }
 
 //ArrayBufferをAudioBufferに変換する
