@@ -71,6 +71,8 @@ impl Bullet {
             if player.break_cnt == None {
                 //プレイヤーを消す
                 player.break_cnt = Some(player.revival_set_cnt);
+                // プレイヤーの残機を減らす
+                player.life -= 1;
                 // 弾を消す
                 self.live = false;
                 draw_background_rect(

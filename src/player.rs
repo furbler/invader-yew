@@ -249,10 +249,11 @@ pub struct Player {
     pub height: f64,                      // 描画サイズの高さ [pixel]
     pub pos: Vec2,                        // 移動後の中心位置
     pre_pos: Vec2,                        // 前回描画時の中心位置
-    pub revival_set_cnt: i32,             //撃破されてから再出撃までのカウント
+    pub revival_set_cnt: i32,             //撃破されてから再出撃までのカウント設定を保存(定数)
     pub break_cnt: Option<i32>,           //再出撃までの残りカウント
     pub image_front: Option<ImageBitmap>, // 表画像
     pub bullet: Bullet,                   // 持ち弾(1発のみ)
+    pub life: i32,                        // 自機含む残機(0になるとゲームオーバー)
     width_explosion: f64,
     height_explosion: f64,
     pub image_explosion_1: Option<ImageBitmap>,
@@ -270,6 +271,7 @@ impl Player {
             revival_set_cnt: 0,
             break_cnt: None,
             image_front: None,
+            life: 0,
             bullet: Bullet::empty(),
             width_explosion: 0.,
             height_explosion: 0.,
@@ -294,6 +296,7 @@ impl Player {
             image_front: Some(image_front),
             revival_set_cnt: 130,
             break_cnt: None,
+            life: 5,
             bullet: Bullet::new_image(
                 image_bullet_front,
                 image_land_bullet_front,
@@ -403,9 +406,36 @@ impl Player {
             audio,
         );
     }
+    fn render_remain_life(&self, ctx: &CanvasRenderingContext2d) {
+        let x = 20.;
+        let y = 565.;
+        // 残機表示
+        ctx.set_fill_style(&JsValue::from("rgb(100,100,100)"));
+        // 赤線より下をすべて消す
+        draw_background_rect(ctx, x, y, 600., 40.);
+        ctx.set_font(&format!("30px sans-serif"));
+        ctx.set_fill_style(&JsValue::from("rgba(68, 200, 210)"));
+        ctx.fill_text(&format!("{}", self.life), x, y + 25.)
+            .unwrap();
+
+        // 数字表記-1 体のプレイヤー機を表示
+        for i in 0..self.life - 1 {
+            ctx.draw_image_with_image_bitmap_and_dw_and_dh(
+                &self.image_front.as_ref().unwrap(),
+                60. + 50. * i as f64,
+                565.,
+                self.width,
+                self.height,
+            )
+            .unwrap();
+        }
+    }
+
     pub fn render(&mut self, ctx: &CanvasRenderingContext2d) {
-        //点数は常に表示する
+        //点数と残機は常に表示する
         self.bullet.score.render(ctx);
+        self.render_remain_life(ctx);
+
         if let Some(_) = self.break_cnt {
             self.bullet.render(ctx);
             return;
