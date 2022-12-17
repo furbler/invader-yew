@@ -9,6 +9,7 @@ pub struct KeyDown {
     pub left: bool,  // プレイヤーを左へ移動させる
     pub right: bool, // プレイヤーを右へ移動させる
     pub shot: bool,  // プレイヤーが弾を撃つ
+    pub pause: bool, // ポーズする
 }
 
 pub fn input_setup(input_key: &Rc<RefCell<KeyDown>>) {
@@ -53,6 +54,9 @@ fn function_key_down(event: web_sys::KeyboardEvent, input_data: &mut KeyDown) {
         "Space" | "Enter" => {
             input_data.shot = true;
         }
+        "Escape" => {
+            input_data.pause = true;
+        }
         _ => (),
     };
 }
@@ -68,6 +72,9 @@ fn function_key_up(event: web_sys::KeyboardEvent, input_data: &mut KeyDown) {
         }
         "Space" | "Enter" => {
             input_data.shot = false;
+        }
+        "Escape" => {
+            input_data.pause = false;
         }
         _ => (),
     };

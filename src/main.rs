@@ -9,6 +9,7 @@ use yew::prelude::*;
 use enemy::*;
 use load_image::ImageType;
 use math::Vec2;
+use pause::Pause;
 use player::Player;
 use sound::Audio;
 use ufo::Ufo;
@@ -18,6 +19,7 @@ mod enemy;
 mod input;
 mod load_image;
 mod math;
+mod pause;
 mod pixel_ctrl;
 mod player;
 mod sound;
@@ -52,6 +54,7 @@ struct AnimationCanvas {
     callback: Closure<dyn FnMut()>,
     input_key_down: Rc<RefCell<input::KeyDown>>,
     need_to_screen_init: bool, // 真ならば画面全体の初期化が必要
+    pause: Pause,
 }
 
 impl Component for AnimationCanvas {
@@ -83,8 +86,10 @@ impl Component for AnimationCanvas {
                 left: false,
                 right: false,
                 shot: false,
+                pause: false,
             })),
             need_to_screen_init: true,
+            pause: Pause::new(),
         }
     }
 
@@ -234,6 +239,15 @@ impl Component for AnimationCanvas {
 
 impl AnimationCanvas {
     fn main_loop(&mut self) {
+        if self.pause.toggle_pause(self.input_key_down.borrow().pause) {
+            // ポーズ状態
+            window()
+                .unwrap()
+                .request_animation_frame(self.callback.as_ref().unchecked_ref())
+                .unwrap();
+            return;
+        }
+
         let canvas: HtmlCanvasElement = self.canvas.cast().unwrap();
         let ctx: CanvasRenderingContext2d =
             canvas.get_context("2d").unwrap().unwrap().unchecked_into();
