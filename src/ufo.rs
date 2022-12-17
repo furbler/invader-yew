@@ -3,6 +3,7 @@ use crate::math::Vec2;
 use crate::player;
 use crate::sound::Audio;
 use instant::Instant;
+use wasm_bindgen::JsValue;
 use web_sys::AudioBufferSourceNode;
 use web_sys::CanvasRenderingContext2d;
 use web_sys::ImageBitmap;
@@ -15,32 +16,52 @@ pub struct Explosion {
     pub image: Option<ImageBitmap>, // 爆発画像
     // 表示カウント(0になったら消滅)
     count: i32,
+    got_score: usize, // 獲得した点数
 }
 
 impl Explosion {
     fn create_effect(&mut self, pos: Vec2) {
         self.pos = pos;
-        self.count = 20;
+        self.count = 120;
         self.live = true;
     }
     fn update(&mut self, ctx: &CanvasRenderingContext2d) {
         if !self.live {
             return;
         }
-        // エフェクト表示
-        ctx.draw_image_with_image_bitmap_and_dw_and_dh(
-            &self.image.as_ref().unwrap(),
-            self.pos.x - self.width / 2.,
-            self.pos.y - self.height / 2.,
-            self.width,
-            self.height,
-        )
-        .unwrap();
-
-        self.count -= 1;
-        // 一定時間経過したら
+        if self.count == 120 {
+            // エフェクト表示
+            ctx.draw_image_with_image_bitmap_and_dw_and_dh(
+                &self.image.as_ref().unwrap(),
+                self.pos.x - self.width / 2.,
+                self.pos.y - self.height / 2.,
+                self.width,
+                self.height,
+            )
+            .unwrap();
+        }
+        if 0 < self.count && self.count < 100 {
+            // 一定時間経過したら
+            // 爆発エフェクト削除
+            draw_background_rect(
+                ctx,
+                self.pos.x - self.width / 2.,
+                self.pos.y - self.height / 2.,
+                self.width,
+                self.height,
+            );
+            // 獲得得点表示
+            ctx.set_font(&format!("24px monospace"));
+            ctx.set_fill_style(&JsValue::from("rgba(219, 85, 221)"));
+            ctx.fill_text(
+                &format!("{}", self.got_score),
+                self.pos.x - 14.,
+                self.pos.y + 8.,
+            )
+            .unwrap();
+        }
         if self.count < 0 {
-            // エフェクト削除
+            // 獲得得点表示削除
             draw_background_rect(
                 ctx,
                 self.pos.x - self.width / 2.,
@@ -50,6 +71,7 @@ impl Explosion {
             );
             self.live = false;
         }
+        self.count -= 1;
     }
 }
 
@@ -82,6 +104,7 @@ impl Ufo {
                 live: false,
                 image: None,
                 count: 0,
+                got_score: 0,
             },
             lapse_time: Instant::now(),
             move_dir: 0,
@@ -104,6 +127,7 @@ impl Ufo {
                 live: false,
                 image: Some(image_explosion),
                 count: 0,
+                got_score: 0,
             },
             lapse_time: Instant::now(),
             move_dir: -1, // 最初は右から左
@@ -154,7 +178,10 @@ impl Ufo {
             player_bullet.remove = Some(player_bullet.pre_pos);
             player_bullet.can_shot = true;
             // 表を参考に点数を加算
-            player_bullet.score.sum += self.score_table[player_bullet.shot_cnt as usize % 15];
+            let got_score = self.score_table[player_bullet.shot_cnt as usize % 15];
+            player_bullet.score.sum += got_score;
+            // 表示用に点数保存
+            self.explosion.got_score = got_score;
             // UFO撃破音再生
             if let Some(sound) = &audio.ufo_explosion {
                 audio.play_once_sound(sound);
