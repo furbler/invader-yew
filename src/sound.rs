@@ -158,7 +158,7 @@ impl Audio {
             sound.volume = Self::limit_value(volume, min, max);
         }
         if let Some(sound) = self.ufo_flying.as_mut() {
-            let volume = sound.volume + diff;
+            let volume = sound.volume + diff * 0.1;
             sound.volume = Self::limit_value(volume, min, max);
         }
         if let Some(sound) = self.ufo_explosion.as_mut() {

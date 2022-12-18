@@ -40,6 +40,7 @@ pub enum Msg {
     AudioVolumeUp,
     AudioVolumeDown,
     AudioVolumeReset,
+    ResetCanvas,
     Initialize,
     MainLoop,
 }
@@ -114,7 +115,6 @@ impl Component for AnimationCanvas {
                     true
                 } else {
                     // すべての種類のキャラクター画像取得完了
-                    ctx.link().send_message(Msg::Initialize);
                     true
                 }
             }
@@ -156,6 +156,16 @@ impl Component for AnimationCanvas {
                 ));
                 true
             }
+            Msg::ResetCanvas => {
+                // Click Thisボタンを削除
+                let document = window().unwrap().document().unwrap();
+                let audio_enable_button_element =
+                    document.get_element_by_id("parent-audio-button").unwrap();
+                audio_enable_button_element.remove();
+
+                ctx.link().send_message(Msg::Initialize);
+                true
+            }
             // 初期化
             Msg::Initialize => {
                 let canvas: HtmlCanvasElement = self.canvas.cast().unwrap();
@@ -179,13 +189,8 @@ impl Component for AnimationCanvas {
                 // キー入力情報初期化
                 input::input_setup(&self.input_key_down);
 
-                ctx.link().send_message(Msg::MainLoop);
+                ctx.link().send_message(Msg::RetAudio);
                 true
-            }
-            // ループ
-            Msg::MainLoop => {
-                self.main_loop();
-                false
             }
             // 音データを取得
             Msg::RetAudio => {
@@ -198,6 +203,7 @@ impl Component for AnimationCanvas {
             // 音データを保存
             Msg::RegisterAudio(audio) => {
                 self.audio = audio;
+                ctx.link().send_message(Msg::MainLoop);
                 false
             }
             Msg::AudioVolumeUp => {
@@ -212,22 +218,26 @@ impl Component for AnimationCanvas {
                 self.audio.reset_volume();
                 false
             }
+            // ループ
+            Msg::MainLoop => {
+                self.main_loop();
+                false
+            }
         }
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
         html! {
             <div>
+                <div id="parent-audio-button">
+                    <button id="audio-button" onclick={ctx.link().callback(|_| Msg::ResetCanvas)}>{ "Click This" }</button>
+                </div>
             // キャンバスのサイズはここで指定
                 <canvas
                     id="canvas"
                     width="700" height="600"
                     ref={self.canvas.clone()}/>
-                // ボタンを押すことで音が再生可能になる
-                <div class="audio-buttons">
-                    <button class="audio-button" onclick={ctx.link().callback(|_| Msg::RetAudio)}>{ "Enable Audio" }</button>
-                </div>
-                <div class="volume-buttons">
+                <div class="volume-buttons-list">
                     <button class="volume-button" onclick={ctx.link().callback(|_| Msg::AudioVolumeUp)}>{ "Volume Up" }</button>
                     <button class="volume-button" onclick={ctx.link().callback(|_| Msg::AudioVolumeReset)}>{ "Reset Volume" }</button>
                     <button class="volume-button" onclick={ctx.link().callback(|_| Msg::AudioVolumeDown)}>{ "Volume Down" }</button>
@@ -239,15 +249,14 @@ impl Component for AnimationCanvas {
 
 impl AnimationCanvas {
     fn main_loop(&mut self) {
+        // ポーズ状態
         if self.pause.toggle_pause(self.input_key_down.borrow().pause) {
-            // ポーズ状態
             window()
                 .unwrap()
                 .request_animation_frame(self.callback.as_ref().unchecked_ref())
                 .unwrap();
             return;
         }
-
         let canvas: HtmlCanvasElement = self.canvas.cast().unwrap();
         let ctx: CanvasRenderingContext2d =
             canvas.get_context("2d").unwrap().unwrap().unchecked_into();
