@@ -288,9 +288,9 @@ impl Enemy {
         // 動く時
         if self.move_turn {
             // 方向を考慮して動く
-            self.pos.x += 10. * move_dir as f64;
+            self.pos.x += 8. * move_dir as f64;
             if move_down {
-                self.pos.y += 23.;
+                self.pos.y += 20.;
             }
             // 表示する画像を切り替える
             self.show_image_type = !self.show_image_type
@@ -373,7 +373,7 @@ impl EnemyManage {
     pub fn default() -> Self {
         EnemyManage {
             left_border: 50.,
-            right_border: 650.,
+            right_border: 550.,
             move_dir: 1,
             move_dir_invert: false,
             move_down: false,
@@ -399,16 +399,16 @@ impl EnemyManage {
         let image_type2_front = self.images_list.get(&ImageType::OctopusClose).unwrap();
         let invader_column = 11;
         // 縦横の間隔
-        let gap_x = 47.;
-        let gap_y = 45.;
+        let gap_x = 37.;
+        let gap_y = 35.;
 
-        let mut invader_pos = Vec2::new(100., canvas_height - 300.);
+        let mut invader_pos = Vec2::new(100., canvas_height - 350.);
         for _ in 0..2 {
             for _ in 0..invader_column {
                 self.enemys_list.push(Enemy {
                     enemy_type: EnemyType::Octopus,
-                    width: image_type1_front.width() as f64 * 3.,
-                    height: image_type1_front.height() as f64 * 3.,
+                    width: image_type1_front.width() as f64 * 2.3,
+                    height: image_type1_front.height() as f64 * 2.3,
                     pos: invader_pos,
                     pre_pos: invader_pos,
                     move_turn: false,
@@ -431,8 +431,8 @@ impl EnemyManage {
             for _ in 0..invader_column {
                 self.enemys_list.push(Enemy {
                     enemy_type: EnemyType::Crab,
-                    width: image_type1_front.width() as f64 * 3.,
-                    height: image_type1_front.height() as f64 * 3.,
+                    width: image_type1_front.width() as f64 * 2.3,
+                    height: image_type1_front.height() as f64 * 2.3,
                     pos: invader_pos,
                     pre_pos: invader_pos,
                     move_turn: false,
@@ -453,8 +453,8 @@ impl EnemyManage {
         for _ in 0..invader_column {
             self.enemys_list.push(Enemy {
                 enemy_type: EnemyType::Squid,
-                width: image_type1_front.width() as f64 * 3.,
-                height: image_type1_front.height() as f64 * 3.,
+                width: image_type1_front.width() as f64 * 2.3,
+                height: image_type1_front.height() as f64 * 2.3,
                 pos: invader_pos,
                 pre_pos: invader_pos,
                 move_turn: false,
@@ -482,8 +482,8 @@ impl EnemyManage {
         explosion_image.insert(EnemyType::Squid, explosion_green.clone());
         self.explosion = Explosion {
             show: None,
-            width: explosion_turquoise.width() as f64 * 3.,
-            height: explosion_turquoise.height() as f64 * 3.,
+            width: explosion_turquoise.width() as f64 * 2.3,
+            height: explosion_turquoise.height() as f64 * 2.3,
             enemy_type_map: explosion_image,
             shadow: Some(explosion_shadow.clone()),
             ..self.explosion

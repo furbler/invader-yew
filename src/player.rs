@@ -87,8 +87,8 @@ impl Bullet {
         image_land_shadow: ImageBitmap,
     ) -> Self {
         Bullet {
-            width: image_front.width() as f64 * 3.,
-            height: image_front.height() as f64 * 3.,
+            width: image_front.width() as f64 * 2.5,
+            height: image_front.height() as f64 * 2.5,
             pos: Vec2::new(0., 0.),
             pre_pos: Vec2::new(0., 0.),
             live: false,
@@ -99,7 +99,7 @@ impl Bullet {
             shot_cnt: -1, // 1発目を0にするため
             remove: None,
             score: Score {
-                pos: Vec2::new(170., 30.),
+                pos: Vec2::new(120., 30.),
                 sum: 0,
                 width: 100.,
                 height: 30.,
@@ -281,8 +281,8 @@ impl Player {
         image_explosion_2: ImageBitmap,
     ) -> Self {
         Player {
-            width: image_front.width() as f64 * 3.,
-            height: image_front.height() as f64 * 3.,
+            width: image_front.width() as f64 * 2.5,
+            height: image_front.height() as f64 * 2.5,
             pos,
             pre_pos: pos,
             image_front: Some(image_front),
@@ -312,7 +312,7 @@ impl Player {
             if cnt < 0 {
                 //一定時間経過したら復活
                 self.break_cnt = None;
-                self.pos.x = 100.;
+                self.pos.x = 70.;
                 return;
             }
             if cnt == self.revival_set_cnt {
@@ -400,12 +400,12 @@ impl Player {
     }
     fn render_remain_life(&self, ctx: &CanvasRenderingContext2d) {
         let x = 20.;
-        let y = 565.;
+        let y = 560.;
         // 残機表示
         ctx.set_fill_style(&JsValue::from("rgb(100,100,100)"));
         // 赤線より下をすべて消す
-        draw_background_rect(ctx, x, y, 600., 40.);
-        ctx.set_font(&format!("30px sans-serif"));
+        draw_background_rect(ctx, x, y + 5., 600., 40.);
+        ctx.set_font(&format!("25px sans-serif"));
         ctx.set_fill_style(&JsValue::from("rgba(68, 200, 210)"));
         ctx.fill_text(&format!("{}", self.life), x, y + 25.)
             .unwrap();

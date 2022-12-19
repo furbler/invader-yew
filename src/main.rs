@@ -192,7 +192,7 @@ impl Component for AnimationCanvas {
                 self.enemy_manage.register_enemys(canvas_height);
                 // プレイヤーの初期化
                 self.player = Player::new(
-                    Vec2::new(100., canvas_height - 90.),
+                    Vec2::new(70., canvas_height - 90.),
                     self.player.image_front.clone().unwrap(),
                     self.player.bullet.image_front.clone().unwrap(),
                     self.player.bullet.image_land_front.clone().unwrap(),
@@ -253,7 +253,7 @@ impl Component for AnimationCanvas {
             // キャンバスのサイズはここで指定
                 <canvas
                     id="canvas"
-                    width="700" height="600"
+                    width="600" height="600"
                     ref={self.canvas.clone()}/>
                 <div class="volume-buttons-list">
                     <button class="volume-button" onclick={ctx.link().callback(|_| Msg::AudioVolumeUp)}>{ "Volume Up" }</button>
@@ -300,20 +300,20 @@ impl AnimationCanvas {
                     ctx.set_stroke_style(&JsValue::from("rgb(180,0,0)"));
                     ctx.set_line_width(2.);
                     ctx.begin_path();
-                    ctx.move_to(0., self.canvas_height - 39.);
-                    ctx.line_to(self.canvas_width - 0., self.canvas_height - 39.);
+                    ctx.move_to(0., self.canvas_height - 40.);
+                    ctx.line_to(self.canvas_width - 0., self.canvas_height - 40.);
                     ctx.stroke();
                     // トーチカの描画サイズ
                     let (torchika_width, torchika_height) = (
                         self.torchika.as_ref().unwrap().width() as f64 * 3.,
                         self.torchika.as_ref().unwrap().height() as f64 * 3.,
                     );
-                    let torchika_start = self.canvas_width / 2. - 195.;
+                    let torchika_start = self.canvas_width / 2. - 175.;
                     // トーチカ描画
                     for i in 0..4 {
                         ctx.draw_image_with_image_bitmap_and_dw_and_dh(
                             &self.torchika.as_ref().unwrap(),
-                            torchika_start + 130. * i as f64 - torchika_width / 2.,
+                            torchika_start + 120. * i as f64 - torchika_width / 2.,
                             self.canvas_height - 180.,
                             torchika_width,
                             torchika_height,

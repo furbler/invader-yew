@@ -51,7 +51,7 @@ impl Explosion {
                 self.height,
             );
             // 獲得得点表示
-            ctx.set_font(&format!("24px monospace"));
+            ctx.set_font(&format!("22px monospace"));
             ctx.set_fill_style(&JsValue::from("rgba(219, 85, 221)"));
             ctx.fill_text(
                 &format!("{}", self.got_score),
@@ -114,15 +114,15 @@ impl Ufo {
     }
     pub fn new(image: ImageBitmap, image_explosion: ImageBitmap) -> Self {
         Ufo {
-            width: image.width() as f64 * 3.,
-            height: image.height() as f64 * 3.,
+            width: image.width() as f64 * 2.3,
+            height: image.height() as f64 * 2.3,
             // ここで高さを指定する
             pos: Vec2 { x: -10., y: 70. },
             pre_pos: Vec2 { x: -10., y: -10. },
             image: Some(image),
             explosion: Explosion {
-                width: image_explosion.width() as f64 * 3.,
-                height: image_explosion.height() as f64 * 3.,
+                width: image_explosion.width() as f64 * 2.3,
+                height: image_explosion.height() as f64 * 2.3,
                 pos: Vec2::new(0., 0.),
                 live: false,
                 image: Some(image_explosion),
