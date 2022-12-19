@@ -28,9 +28,10 @@ mod title;
 mod ufo;
 
 enum Scene {
-    Title,
-    Pause,
-    Play,
+    Title,            // タイトル画面
+    Pause,            // 一時停止状態
+    Play,             // ゲーム実行中
+    LaunchStage(i32), // ゲーム開始後、プレイヤーが操作可能になるまで
 }
 
 pub enum Msg {
@@ -63,6 +64,8 @@ struct AnimationCanvas {
     callback: Closure<dyn FnMut()>,
     input_key_down: Rc<RefCell<input::KeyDown>>,
     need_to_screen_init: bool, // 真ならば画面全体の初期化が必要
+    canvas_width: f64,
+    canvas_height: f64,
     pause: Pause,
     scene: Scene,
     title: Title,
@@ -100,6 +103,8 @@ impl Component for AnimationCanvas {
                 pause: false,
             })),
             need_to_screen_init: true,
+            canvas_width: 0.,
+            canvas_height: 0.,
             pause: Pause::new(),
             title: Title::new(0., 0.),
             scene: Scene::Title,
@@ -269,8 +274,7 @@ impl AnimationCanvas {
             Scene::Title => {
                 // スタートボタンが押されたらゲーム開始
                 if self.input_key_down.borrow().shot {
-                    self.ufo.reset_timer();
-                    self.scene = Scene::Play;
+                    self.scene = Scene::LaunchStage(120);
                 } else {
                     self.title.render(&ctx);
                 }
@@ -281,16 +285,13 @@ impl AnimationCanvas {
                     self.scene = Scene::Play;
                 }
             }
-            Scene::Play => {
-                // ポーズボタンが押されたらポーズ
-                if self.pause.toggle_pause(self.input_key_down.borrow().pause) {
-                    self.scene = Scene::Pause;
-                    return;
-                }
-                let (canvas_width, canvas_height) = (canvas.width() as f64, canvas.height() as f64);
+            Scene::LaunchStage(cnt) => {
+                (self.canvas_width, self.canvas_height) =
+                    (canvas.width() as f64, canvas.height() as f64);
                 ctx.set_global_alpha(1.);
                 // 画像のぼやけを防ぐ
                 ctx.set_image_smoothing_enabled(false);
+
                 // 画面全体の初期化
                 if self.need_to_screen_init {
                     ctx.set_fill_style(&JsValue::from("rgb(0,0,0)"));
@@ -299,21 +300,21 @@ impl AnimationCanvas {
                     ctx.set_stroke_style(&JsValue::from("rgb(180,0,0)"));
                     ctx.set_line_width(2.);
                     ctx.begin_path();
-                    ctx.move_to(0., canvas_height - 39.);
-                    ctx.line_to(canvas_width - 0., canvas_height - 39.);
+                    ctx.move_to(0., self.canvas_height - 39.);
+                    ctx.line_to(self.canvas_width - 0., self.canvas_height - 39.);
                     ctx.stroke();
                     // トーチカの描画サイズ
                     let (torchika_width, torchika_height) = (
                         self.torchika.as_ref().unwrap().width() as f64 * 3.,
                         self.torchika.as_ref().unwrap().height() as f64 * 3.,
                     );
-                    let torchika_start = canvas_width / 2. - 195.;
+                    let torchika_start = self.canvas_width / 2. - 195.;
                     // トーチカ描画
                     for i in 0..4 {
                         ctx.draw_image_with_image_bitmap_and_dw_and_dh(
                             &self.torchika.as_ref().unwrap(),
                             torchika_start + 130. * i as f64 - torchika_width / 2.,
-                            canvas_height - 180.,
+                            self.canvas_height - 180.,
                             torchika_width,
                             torchika_height,
                         )
@@ -323,24 +324,57 @@ impl AnimationCanvas {
                     self.need_to_screen_init = false;
                 }
 
+                // 敵インベーダーの処理
+                // プレイヤーが操作可能になるまで敵は攻撃しない
+                self.enemy_manage.set_shot_interval(0);
+                self.enemy_manage.update(
+                    &ctx,
+                    self.canvas_width,
+                    self.canvas_height,
+                    &mut self.player,
+                    &self.audio,
+                );
+                self.enemy_manage.render(&ctx);
+
+                // 一定時間経過するまで繰り返す
+                if cnt < 0 {
+                    self.scene = Scene::Play;
+                    // UFOの出現タイマーを開始する
+                    self.ufo.reset_timer();
+                } else {
+                    self.scene = Scene::LaunchStage(cnt - 1);
+                }
+            }
+            Scene::Play => {
+                // ポーズボタンが押されたらゲーム一時停止
+                if self.pause.toggle_pause(self.input_key_down.borrow().pause) {
+                    self.scene = Scene::Pause;
+                }
+                ctx.set_global_alpha(1.);
+                // 画像のぼやけを防ぐ
+                ctx.set_image_smoothing_enabled(false);
                 // プレイヤーの処理
                 self.player.update(
                     &ctx,
                     &self.input_key_down.borrow(),
-                    canvas_width,
+                    self.canvas_width,
                     &self.audio,
                 );
                 // 敵インベーダーの処理
                 self.enemy_manage.update(
                     &ctx,
-                    canvas_width,
-                    canvas_height,
+                    self.canvas_width,
+                    self.canvas_height,
                     &mut self.player,
                     &self.audio,
                 );
                 // UFOの処理
-                self.ufo
-                    .update(&ctx, canvas_width, &mut self.player.bullet, &self.audio);
+                self.ufo.update(
+                    &ctx,
+                    self.canvas_width,
+                    &mut self.player.bullet,
+                    &self.audio,
+                );
 
                 self.player.render(&ctx);
                 self.enemy_manage.render(&ctx);

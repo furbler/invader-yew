@@ -726,4 +726,8 @@ impl EnemyManage {
         //はみだした部分(全滅した縦列)を消す
         self.can_shot_enemy.retain(|x| x < &self.enemys_list.len());
     }
+    // 敵の弾の発射を防ぎたい時などに使う
+    pub fn set_shot_interval(&mut self, shot_interval: usize) {
+        self.shot_interval = shot_interval;
+    }
 }
