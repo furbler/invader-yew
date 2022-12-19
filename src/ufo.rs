@@ -137,6 +137,10 @@ impl Ufo {
             ],
         }
     }
+    // 出現タイミング用タイマーをリセット
+    pub fn reset_timer(&mut self) {
+        self.lapse_time = Instant::now();
+    }
     fn remove(&mut self, ctx: &CanvasRenderingContext2d) {
         // 描画を削除
         self.remove_shadow(ctx);

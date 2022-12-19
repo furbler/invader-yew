@@ -12,6 +12,7 @@ use math::Vec2;
 use pause::Pause;
 use player::Player;
 use sound::Audio;
+use title::Title;
 use ufo::Ufo;
 
 mod dot_data;
@@ -23,7 +24,14 @@ mod pause;
 mod pixel_ctrl;
 mod player;
 mod sound;
+mod title;
 mod ufo;
+
+enum Scene {
+    Title,
+    Pause,
+    Play,
+}
 
 pub enum Msg {
     // ビットマップ画像を取得
@@ -56,6 +64,8 @@ struct AnimationCanvas {
     input_key_down: Rc<RefCell<input::KeyDown>>,
     need_to_screen_init: bool, // 真ならば画面全体の初期化が必要
     pause: Pause,
+    scene: Scene,
+    title: Title,
 }
 
 impl Component for AnimationCanvas {
@@ -91,6 +101,8 @@ impl Component for AnimationCanvas {
             })),
             need_to_screen_init: true,
             pause: Pause::new(),
+            title: Title::new(0., 0.),
+            scene: Scene::Title,
         }
     }
 
@@ -169,7 +181,8 @@ impl Component for AnimationCanvas {
             // 初期化
             Msg::Initialize => {
                 let canvas: HtmlCanvasElement = self.canvas.cast().unwrap();
-                let canvas_height = canvas.height() as f64;
+                let (canvas_width, canvas_height) = (canvas.width() as f64, canvas.height() as f64);
+                self.title = Title::new(canvas_width, canvas_height);
                 // 敵インベーダーの初期化
                 self.enemy_manage.register_enemys(canvas_height);
                 // プレイヤーの初期化
@@ -249,76 +262,91 @@ impl Component for AnimationCanvas {
 
 impl AnimationCanvas {
     fn main_loop(&mut self) {
-        // ポーズ状態
-        if self.pause.toggle_pause(self.input_key_down.borrow().pause) {
-            window()
-                .unwrap()
-                .request_animation_frame(self.callback.as_ref().unchecked_ref())
-                .unwrap();
-            return;
-        }
         let canvas: HtmlCanvasElement = self.canvas.cast().unwrap();
         let ctx: CanvasRenderingContext2d =
             canvas.get_context("2d").unwrap().unwrap().unchecked_into();
-        let (canvas_width, canvas_height) = (canvas.width() as f64, canvas.height() as f64);
-        ctx.set_global_alpha(1.);
-        // 画像のぼやけを防ぐ
-        ctx.set_image_smoothing_enabled(false);
-        // 画面全体の初期化
-        if self.need_to_screen_init {
-            ctx.set_fill_style(&JsValue::from("rgb(0,0,0)"));
-            ctx.fill_rect(0.0, 0.0, canvas.width().into(), canvas.height().into());
-            // プレイヤーの下に赤線を描く
-            ctx.set_stroke_style(&JsValue::from("rgb(180,0,0)"));
-            ctx.set_line_width(2.);
-            ctx.begin_path();
-            ctx.move_to(0., canvas_height - 39.);
-            ctx.line_to(canvas_width - 0., canvas_height - 39.);
-            ctx.stroke();
-            // トーチカの描画サイズ
-            let (torchika_width, torchika_height) = (
-                self.torchika.as_ref().unwrap().width() as f64 * 3.,
-                self.torchika.as_ref().unwrap().height() as f64 * 3.,
-            );
-            let torchika_start = canvas_width / 2. - 195.;
-            // トーチカ描画
-            for i in 0..4 {
-                ctx.draw_image_with_image_bitmap_and_dw_and_dh(
-                    &self.torchika.as_ref().unwrap(),
-                    torchika_start + 130. * i as f64 - torchika_width / 2.,
-                    canvas_height - 180.,
-                    torchika_width,
-                    torchika_height,
-                )
-                .unwrap();
+        match self.scene {
+            Scene::Title => {
+                // スタートボタンが押されたらゲーム開始
+                if self.input_key_down.borrow().shot {
+                    self.ufo.reset_timer();
+                    self.scene = Scene::Play;
+                } else {
+                    self.title.render(&ctx);
+                }
             }
-            // 初期化は最初のみ
-            self.need_to_screen_init = false;
+            Scene::Pause => {
+                // ポーズボタンが押されたらゲーム再開
+                if self.pause.toggle_pause(self.input_key_down.borrow().pause) {
+                    self.scene = Scene::Play;
+                }
+            }
+            Scene::Play => {
+                // ポーズボタンが押されたらポーズ
+                if self.pause.toggle_pause(self.input_key_down.borrow().pause) {
+                    self.scene = Scene::Pause;
+                    return;
+                }
+                let (canvas_width, canvas_height) = (canvas.width() as f64, canvas.height() as f64);
+                ctx.set_global_alpha(1.);
+                // 画像のぼやけを防ぐ
+                ctx.set_image_smoothing_enabled(false);
+                // 画面全体の初期化
+                if self.need_to_screen_init {
+                    ctx.set_fill_style(&JsValue::from("rgb(0,0,0)"));
+                    ctx.fill_rect(0.0, 0.0, canvas.width().into(), canvas.height().into());
+                    // プレイヤーの下に赤線を描く
+                    ctx.set_stroke_style(&JsValue::from("rgb(180,0,0)"));
+                    ctx.set_line_width(2.);
+                    ctx.begin_path();
+                    ctx.move_to(0., canvas_height - 39.);
+                    ctx.line_to(canvas_width - 0., canvas_height - 39.);
+                    ctx.stroke();
+                    // トーチカの描画サイズ
+                    let (torchika_width, torchika_height) = (
+                        self.torchika.as_ref().unwrap().width() as f64 * 3.,
+                        self.torchika.as_ref().unwrap().height() as f64 * 3.,
+                    );
+                    let torchika_start = canvas_width / 2. - 195.;
+                    // トーチカ描画
+                    for i in 0..4 {
+                        ctx.draw_image_with_image_bitmap_and_dw_and_dh(
+                            &self.torchika.as_ref().unwrap(),
+                            torchika_start + 130. * i as f64 - torchika_width / 2.,
+                            canvas_height - 180.,
+                            torchika_width,
+                            torchika_height,
+                        )
+                        .unwrap();
+                    }
+                    // 初期化は最初のみ
+                    self.need_to_screen_init = false;
+                }
+
+                // プレイヤーの処理
+                self.player.update(
+                    &ctx,
+                    &self.input_key_down.borrow(),
+                    canvas_width,
+                    &self.audio,
+                );
+                // 敵インベーダーの処理
+                self.enemy_manage.update(
+                    &ctx,
+                    canvas_width,
+                    canvas_height,
+                    &mut self.player,
+                    &self.audio,
+                );
+                // UFOの処理
+                self.ufo
+                    .update(&ctx, canvas_width, &mut self.player.bullet, &self.audio);
+
+                self.player.render(&ctx);
+                self.enemy_manage.render(&ctx);
+                self.ufo.render(&ctx);
+            }
         }
-
-        // プレイヤーの処理
-        self.player.update(
-            &ctx,
-            &self.input_key_down.borrow(),
-            canvas_width,
-            &self.audio,
-        );
-        // 敵インベーダーの処理
-        self.enemy_manage.update(
-            &ctx,
-            canvas_width,
-            canvas_height,
-            &mut self.player,
-            &self.audio,
-        );
-        // UFOの処理
-        self.ufo
-            .update(&ctx, canvas_width, &mut self.player.bullet, &self.audio);
-
-        self.player.render(&ctx);
-        self.enemy_manage.render(&ctx);
-        self.ufo.render(&ctx);
-
         window()
             .unwrap()
             .request_animation_frame(self.callback.as_ref().unchecked_ref())
