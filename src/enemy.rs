@@ -687,11 +687,28 @@ impl EnemyManage {
             }
             //弾が消滅済みで、かつ前回の射撃から(3発の弾共通で)一定時間経過して、かつ弾の爆発エフェクト表示が終了していた場合
             if !bullet.live && self.shot_interval > 70 && bullet.explosion.effect_cnt == None {
-                //疑似乱数で発射タイミングを決定(ここの発射タイミングのプログラムはあとで変える)
-                let index = self.can_shot_enemy[self.shot_interval % self.can_shot_enemy.len()];
+                // プレイヤーに一番近い敵個体の番号を求める
+                let mut i_near_enemy = self.can_shot_enemy[0];
+                for i in &self.can_shot_enemy {
+                    if (self.enemys_list[*i].pos.x - player.pos.x).abs()
+                        < (self.enemys_list[i_near_enemy].pos.x - player.pos.x).abs()
+                    {
+                        i_near_enemy = *i;
+                    }
+                }
+                //疑似的な乱数で発射タイミングを決定
+                let i_shot_enemy;
+                let seed = (player.pos.x + self.enemys_list[self.can_shot_enemy[0]].pos.x) as usize;
+                if seed % 3 == 0 {
+                    // 確率1/3でプレイヤーに一番近い敵が射撃する
+                    i_shot_enemy = i_near_enemy;
+                } else {
+                    // 確率2/3でランダム
+                    i_shot_enemy = seed % self.can_shot_enemy.len();
+                }
                 bullet.set(Vec2::new(
-                    self.enemys_list[index].pos.x,
-                    self.enemys_list[index].pos.y + 20.,
+                    self.enemys_list[i_shot_enemy].pos.x,
+                    self.enemys_list[i_shot_enemy].pos.y + 40.,
                 ));
                 self.shot_interval = 0;
             }

@@ -310,6 +310,7 @@ impl Player {
     pub fn reset(&mut self) {
         self.pos = Vec2::new(70., self.canvas_height - 90.);
         self.pre_pos = Vec2::new(70., self.canvas_height - 90.);
+        self.bullet.shot_cnt = -1;
     }
     pub fn update(&mut self, ctx: &CanvasRenderingContext2d, input_key: &KeyDown, audio: &Audio) {
         //プレイヤーが撃破されてから一定時間
