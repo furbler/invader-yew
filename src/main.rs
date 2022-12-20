@@ -8,7 +8,6 @@ use yew::prelude::*;
 
 use enemy::*;
 use load_image::ImageType;
-use math::Vec2;
 use pause::Pause;
 use player::Player;
 use sound::Audio;
@@ -61,6 +60,7 @@ struct AnimationCanvas {
     torchika: Option<ImageBitmap>,
     ufo: Ufo,
     audio: Audio,
+    stage_number: usize,
     callback: Closure<dyn FnMut()>,
     input_key_down: Rc<RefCell<input::KeyDown>>,
     need_to_screen_init: bool, // 真ならば画面全体の初期化が必要
@@ -103,6 +103,7 @@ impl Component for AnimationCanvas {
                 pause: false,
             })),
             need_to_screen_init: true,
+            stage_number: 1,
             canvas_width: 0.,
             canvas_height: 0.,
             pause: Pause::new(),
@@ -189,10 +190,12 @@ impl Component for AnimationCanvas {
                 let (canvas_width, canvas_height) = (canvas.width() as f64, canvas.height() as f64);
                 self.title = Title::new(canvas_width, canvas_height);
                 // 敵インベーダーの初期化
-                self.enemy_manage.register_enemys(canvas_height);
+                self.enemy_manage
+                    .register_enemys(canvas_width, canvas_height);
                 // プレイヤーの初期化
                 self.player = Player::new(
-                    Vec2::new(70., canvas_height - 90.),
+                    canvas_width,
+                    canvas_height,
                     self.player.image_front.clone().unwrap(),
                     self.player.bullet.image_front.clone().unwrap(),
                     self.player.bullet.image_land_front.clone().unwrap(),
@@ -320,6 +323,9 @@ impl AnimationCanvas {
                         )
                         .unwrap();
                     }
+                    self.player.reset();
+                    self.enemy_manage.reset(&ctx, self.stage_number);
+                    self.ufo.reset(&ctx);
                     // 初期化は最初のみ
                     self.need_to_screen_init = false;
                 }
@@ -327,19 +333,14 @@ impl AnimationCanvas {
                 // 敵インベーダーの処理
                 // プレイヤーが操作可能になるまで敵は攻撃しない
                 self.enemy_manage.set_shot_interval(0);
-                self.enemy_manage.update(
-                    &ctx,
-                    self.canvas_width,
-                    self.canvas_height,
-                    &mut self.player,
-                    &self.audio,
-                );
+                self.enemy_manage
+                    .update(&ctx, &mut self.player, &self.audio);
                 self.enemy_manage.render(&ctx);
 
                 // 一定時間経過するまで繰り返す
                 if cnt < 0 {
                     self.scene = Scene::Play;
-                    // UFOの出現タイマーを開始する
+                    // UFOの出現タイマーを初期化する
                     self.ufo.reset_timer();
                 } else {
                     self.scene = Scene::LaunchStage(cnt - 1);
@@ -354,20 +355,25 @@ impl AnimationCanvas {
                 // 画像のぼやけを防ぐ
                 ctx.set_image_smoothing_enabled(false);
                 // プレイヤーの処理
-                self.player.update(
-                    &ctx,
-                    &self.input_key_down.borrow(),
-                    self.canvas_width,
-                    &self.audio,
-                );
+                self.player
+                    .update(&ctx, &self.input_key_down.borrow(), &self.audio);
                 // 敵インベーダーの処理
-                self.enemy_manage.update(
-                    &ctx,
-                    self.canvas_width,
-                    self.canvas_height,
-                    &mut self.player,
-                    &self.audio,
-                );
+                let enemy_remain = self
+                    .enemy_manage
+                    .update(&ctx, &mut self.player, &self.audio);
+                // インベーダーが全滅した場合
+                if !enemy_remain {
+                    // 画面を初期化する
+                    self.need_to_screen_init = true;
+                    // ステージは9面の次は2面に戻る
+                    self.stage_number = if self.stage_number >= 9 {
+                        2
+                    } else {
+                        self.stage_number + 1
+                    };
+                    self.scene = Scene::LaunchStage(120);
+                }
+
                 // UFOの処理
                 self.ufo.update(
                     &ctx,

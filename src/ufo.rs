@@ -154,6 +154,11 @@ impl Ufo {
             sound_node.stop().unwrap();
         }
     }
+    // 新しいステージに進むときなどに残った表示を消す
+    pub fn reset(&mut self, ctx: &CanvasRenderingContext2d) {
+        self.reset_timer();
+        self.remove(ctx);
+    }
 
     pub fn update(
         &mut self,

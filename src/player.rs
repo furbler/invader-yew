@@ -250,6 +250,8 @@ pub struct Player {
     height_explosion: f64,
     pub image_explosion_1: Option<ImageBitmap>,
     pub image_explosion_2: Option<ImageBitmap>,
+    canvas_width: f64,
+    canvas_height: f64,
 }
 
 impl Player {
@@ -269,10 +271,13 @@ impl Player {
             height_explosion: 0.,
             image_explosion_1: None,
             image_explosion_2: None,
+            canvas_width: 0.,
+            canvas_height: 0.,
         }
     }
     pub fn new(
-        pos: Vec2,
+        canvas_width: f64,
+        canvas_height: f64,
         image_front: ImageBitmap,
         image_bullet_front: ImageBitmap,
         image_land_bullet_front: ImageBitmap,
@@ -283,8 +288,8 @@ impl Player {
         Player {
             width: image_front.width() as f64 * 2.5,
             height: image_front.height() as f64 * 2.5,
-            pos,
-            pre_pos: pos,
+            pos: Vec2::new(70., canvas_height - 90.),
+            pre_pos: Vec2::new(70., canvas_height - 90.),
             image_front: Some(image_front),
             revival_set_cnt: 130,
             break_cnt: None,
@@ -298,15 +303,15 @@ impl Player {
             height_explosion: image_explosion_1.height() as f64 * 3.,
             image_explosion_1: Some(image_explosion_1),
             image_explosion_2: Some(image_explosion_2),
+            canvas_width,
+            canvas_height,
         }
     }
-    pub fn update(
-        &mut self,
-        ctx: &CanvasRenderingContext2d,
-        input_key: &KeyDown,
-        canvas_width: f64,
-        audio: &Audio,
-    ) {
+    pub fn reset(&mut self) {
+        self.pos = Vec2::new(70., self.canvas_height - 90.);
+        self.pre_pos = Vec2::new(70., self.canvas_height - 90.);
+    }
+    pub fn update(&mut self, ctx: &CanvasRenderingContext2d, input_key: &KeyDown, audio: &Audio) {
         //プレイヤーが撃破されてから一定時間
         if let Some(cnt) = self.break_cnt {
             if cnt < 0 {
@@ -374,7 +379,7 @@ impl Player {
                 input_key,
                 self.pos,
                 self.break_cnt,
-                canvas_width,
+                self.canvas_width,
                 audio,
             );
 
@@ -385,7 +390,7 @@ impl Player {
         if input_key.left && 0. < self.pos.x - self.width / 2. - distance {
             self.pos.x -= distance;
         }
-        if input_key.right && self.pos.x + self.width / 2. + distance < canvas_width {
+        if input_key.right && self.pos.x + self.width / 2. + distance < self.canvas_width {
             self.pos.x += distance;
         }
 
@@ -394,7 +399,7 @@ impl Player {
             input_key,
             self.pos,
             self.break_cnt,
-            canvas_width,
+            self.canvas_width,
             audio,
         );
     }

@@ -19,7 +19,6 @@ pub enum ImageType {
     ExplosionTurquoise,
     ExplosionPurple,
     ExpolsionGreen,
-    ExplosionShadow,
     LandPlayerBulletFront,
     LandPlayerBulletShadow,
     Torchika,
@@ -48,7 +47,6 @@ impl ImageType {
             ImageType::ExplosionTurquoise,
             ImageType::ExplosionPurple,
             ImageType::ExpolsionGreen,
-            ImageType::ExplosionShadow,
             ImageType::LandPlayerBulletFront,
             ImageType::LandPlayerBulletShadow,
             ImageType::Torchika,
@@ -86,7 +84,6 @@ pub fn image_data_collect() -> (HashMap<ImageType, ImageData>, Vec<Vec<u8>>) {
     all_image_list.ret_image_data("explosion", ImageType::ExplosionTurquoise, Color::Turquoise);
     all_image_list.ret_image_data("explosion", ImageType::ExplosionPurple, Color::Purple);
     all_image_list.ret_image_data("explosion", ImageType::ExpolsionGreen, Color::Green);
-    all_image_list.ret_image_data("explosion", ImageType::ExplosionShadow, Color::Background);
 
     all_image_list.ret_image_data(
         "land_player_bullet",

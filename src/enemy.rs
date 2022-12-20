@@ -177,7 +177,6 @@ struct Explosion {
     // 表示高さ
     height: f64,
     enemy_type_map: HashMap<EnemyType, ImageBitmap>,
-    shadow: Option<ImageBitmap>,
 }
 impl Explosion {
     fn create_effect(&mut self, pos: Vec2, image: ImageBitmap) {
@@ -207,14 +206,13 @@ impl Explosion {
             // 削除
             self.show = None;
             // 爆発エフェクトを消す
-            ctx.draw_image_with_image_bitmap_and_dw_and_dh(
-                self.shadow.as_ref().unwrap(),
+            draw_background_rect(
+                ctx,
                 self.pos.x - self.width / 2.,
                 self.pos.y - self.height / 2.,
                 self.width,
                 self.height,
-            )
-            .unwrap();
+            );
             // 爆発エフェクトが消えてからプレイヤーの射撃を可能とする
             player_bullet.can_shot = true;
         }
@@ -367,6 +365,8 @@ pub struct EnemyManage {
     shot_interval: usize,
     // 前回再生した音番号
     play_sound_index: usize,
+    canvas_width: f64,
+    canvas_height: f64,
 }
 
 impl EnemyManage {
@@ -386,15 +386,18 @@ impl EnemyManage {
                 width: 0.,
                 height: 0.,
                 enemy_type_map: HashMap::new(),
-                shadow: None,
             },
             bullets: Vec::new(),
             can_shot_enemy: core::array::from_fn::<usize, 11, _>(|i| i).to_vec(),
             shot_interval: 0,
             play_sound_index: 0,
+            canvas_width: 0.,
+            canvas_height: 0.,
         }
     }
-    pub fn register_enemys(&mut self, canvas_height: f64) {
+    pub fn register_enemys(&mut self, canvas_width: f64, canvas_height: f64) {
+        self.canvas_width = canvas_width;
+        self.canvas_height = canvas_height;
         let image_type1_front = self.images_list.get(&ImageType::OctopusOpen).unwrap();
         let image_type2_front = self.images_list.get(&ImageType::OctopusClose).unwrap();
         let invader_column = 11;
@@ -475,7 +478,6 @@ impl EnemyManage {
             .unwrap();
         let explosion_purple = self.images_list.get(&ImageType::ExplosionPurple).unwrap();
         let explosion_green = self.images_list.get(&ImageType::ExpolsionGreen).unwrap();
-        let explosion_shadow = self.images_list.get(&ImageType::ExplosionShadow).unwrap();
         let mut explosion_image = HashMap::new();
         explosion_image.insert(EnemyType::Octopus, explosion_purple.clone());
         explosion_image.insert(EnemyType::Crab, explosion_turquoise.clone());
@@ -485,7 +487,6 @@ impl EnemyManage {
             width: explosion_turquoise.width() as f64 * 2.3,
             height: explosion_turquoise.height() as f64 * 2.3,
             enemy_type_map: explosion_image,
-            shadow: Some(explosion_shadow.clone()),
             ..self.explosion
         };
 
@@ -579,15 +580,13 @@ impl EnemyManage {
         };
         self.bullets.push(bullet);
     }
-
+    // 全滅していたら偽を返す
     pub fn update(
         &mut self,
         ctx: &CanvasRenderingContext2d,
-        canvas_width: f64,
-        canvas_height: f64,
         player: &mut player::Player,
         audio: &Audio,
-    ) {
+    ) -> bool {
         if let Some(_) = self.explosion.show {
             // 爆発エフェクト表示
             self.explosion.update_render(ctx, &mut player.bullet);
@@ -595,12 +594,12 @@ impl EnemyManage {
             for bullet in &mut self.bullets {
                 // 敵が全滅していたら発射しない
                 if self.can_shot_enemy.len() == 0 {
-                    return;
+                    return false;
                 }
-                bullet.update(ctx, canvas_width, canvas_height, player);
+                bullet.update(ctx, self.canvas_width, self.canvas_height, player);
             }
             // 爆発エフェクト表示中は敵の動きをすべて止める
-            return;
+            return true;
         }
 
         // 各敵個体の移動処理
@@ -684,7 +683,7 @@ impl EnemyManage {
         for bullet in &mut self.bullets {
             // 敵が全滅していたら発射しない
             if self.can_shot_enemy.len() == 0 {
-                return;
+                return false;
             }
             //弾が消滅済みで、かつ前回の射撃から(3発の弾共通で)一定時間経過して、かつ弾の爆発エフェクト表示が終了していた場合
             if !bullet.live && self.shot_interval > 70 && bullet.explosion.effect_cnt == None {
@@ -696,9 +695,10 @@ impl EnemyManage {
                 ));
                 self.shot_interval = 0;
             }
-            bullet.update(ctx, canvas_width, canvas_height, player);
+            bullet.update(ctx, self.canvas_width, self.canvas_height, player);
         }
         self.shot_interval += 1;
+        true
     }
     pub fn render(&mut self, ctx: &CanvasRenderingContext2d) {
         self.enemys_list.iter_mut().for_each(|enemy| {
@@ -729,5 +729,64 @@ impl EnemyManage {
     // 敵の弾の発射を防ぎたい時などに使う
     pub fn set_shot_interval(&mut self, shot_interval: usize) {
         self.shot_interval = shot_interval;
+    }
+    // インベーダーを全て初期化
+    pub fn reset(&mut self, ctx: &CanvasRenderingContext2d, stage_number: usize) {
+        let invader_column = 11;
+        // 縦横の間隔
+        let gap_x = 37.;
+        let gap_y = 35.;
+
+        // ステージが進むほど開始位置が下になる
+        let mut invader_pos = Vec2::new(
+            100.,
+            self.canvas_height - 350. + 25. * (stage_number - 1) as f64,
+        );
+        for row in 0..5 {
+            for column in 0..invader_column {
+                let i = invader_column * row + column;
+                self.enemys_list[i].pos = invader_pos;
+                self.enemys_list[i].pre_pos = invader_pos;
+                self.enemys_list[i].move_turn = false;
+                self.enemys_list[i].live = true;
+                self.enemys_list[i].show_image_type = true;
+
+                invader_pos.x += gap_x;
+            }
+            invader_pos.x = 100.;
+            invader_pos.y -= gap_y;
+        }
+        self.enemys_list[0].move_turn = true;
+        self.move_dir = 1;
+        self.move_dir_invert = false;
+        self.move_down = false;
+
+        // 最後に残った爆発エフェクトを消す
+        draw_background_rect(
+            ctx,
+            self.explosion.pos.x - self.explosion.width / 2.,
+            self.explosion.pos.y - self.explosion.height / 2.,
+            self.explosion.width,
+            self.explosion.height,
+        );
+
+        for bullet in self.bullets.iter_mut() {
+            // 弾が画面に残っていたら消す
+            if bullet.live {
+                draw_background_rect(
+                    ctx,
+                    bullet.pre_pos.x - bullet.width / 2.,
+                    bullet.pre_pos.y - bullet.height / 2.,
+                    bullet.width,
+                    bullet.height,
+                );
+                bullet.live = false;
+            }
+        }
+
+        self.explosion.count = 0;
+        self.can_shot_enemy = core::array::from_fn::<usize, 11, _>(|i| i).to_vec();
+        self.shot_interval = 0;
+        self.play_sound_index = 0;
     }
 }
