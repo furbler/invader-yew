@@ -401,17 +401,15 @@ impl EnemyManage {
         let image_type1_front = self.images_list.get(&ImageType::OctopusOpen).unwrap();
         let image_type2_front = self.images_list.get(&ImageType::OctopusClose).unwrap();
         let invader_column = 11;
-        // 縦横の間隔
-        let gap_x = 37.;
-        let gap_y = 35.;
-
-        let mut invader_pos = Vec2::new(100., canvas_height - 350.);
+        // 表示サイズ/オリジナルの画像サイズ
+        let scale = 2.3;
+        let invader_pos = Vec2::new(0., 0.);
         for _ in 0..2 {
             for _ in 0..invader_column {
                 self.enemys_list.push(Enemy {
                     enemy_type: EnemyType::Octopus,
-                    width: image_type1_front.width() as f64 * 2.3,
-                    height: image_type1_front.height() as f64 * 2.3,
+                    width: image_type1_front.width() as f64 * scale,
+                    height: image_type1_front.height() as f64 * scale,
                     pos: invader_pos,
                     pre_pos: invader_pos,
                     move_turn: false,
@@ -421,10 +419,7 @@ impl EnemyManage {
                     image_type1_front: image_type1_front.clone(),
                     image_type2_front: image_type2_front.clone(),
                 });
-                invader_pos.x += gap_x;
             }
-            invader_pos.x = 100.;
-            invader_pos.y -= gap_y;
         }
 
         let image_type1_front = self.images_list.get(&ImageType::CrabBanzai).unwrap();
@@ -434,8 +429,8 @@ impl EnemyManage {
             for _ in 0..invader_column {
                 self.enemys_list.push(Enemy {
                     enemy_type: EnemyType::Crab,
-                    width: image_type1_front.width() as f64 * 2.3,
-                    height: image_type1_front.height() as f64 * 2.3,
+                    width: image_type1_front.width() as f64 * scale,
+                    height: image_type1_front.height() as f64 * scale,
                     pos: invader_pos,
                     pre_pos: invader_pos,
                     move_turn: false,
@@ -445,10 +440,7 @@ impl EnemyManage {
                     image_type1_front: image_type1_front.clone(),
                     image_type2_front: image_type2_front.clone(),
                 });
-                invader_pos.x += gap_x;
             }
-            invader_pos.x = 100.;
-            invader_pos.y -= gap_y;
         }
         let image_type1_front = self.images_list.get(&ImageType::SquidOpen).unwrap();
         let image_type2_front = self.images_list.get(&ImageType::SquidClose).unwrap();
@@ -456,8 +448,8 @@ impl EnemyManage {
         for _ in 0..invader_column {
             self.enemys_list.push(Enemy {
                 enemy_type: EnemyType::Squid,
-                width: image_type1_front.width() as f64 * 2.3,
-                height: image_type1_front.height() as f64 * 2.3,
+                width: image_type1_front.width() as f64 * scale,
+                height: image_type1_front.height() as f64 * scale,
                 pos: invader_pos,
                 pre_pos: invader_pos,
                 move_turn: false,
@@ -467,7 +459,6 @@ impl EnemyManage {
                 image_type1_front: image_type1_front.clone(),
                 image_type2_front: image_type2_front.clone(),
             });
-            invader_pos.x += gap_x;
         }
 
         self.enemys_list[0].move_turn = true;
@@ -484,8 +475,8 @@ impl EnemyManage {
         explosion_image.insert(EnemyType::Squid, explosion_green.clone());
         self.explosion = Explosion {
             show: None,
-            width: explosion_turquoise.width() as f64 * 2.3,
-            height: explosion_turquoise.height() as f64 * 2.3,
+            width: explosion_turquoise.width() as f64 * scale,
+            height: explosion_turquoise.height() as f64 * scale,
             enemy_type_map: explosion_image,
             ..self.explosion
         };
@@ -748,14 +739,19 @@ impl EnemyManage {
     // インベーダーを全て初期化
     pub fn reset(&mut self, ctx: &CanvasRenderingContext2d, stage_number: usize) {
         let invader_column = 11;
-        // 縦横の間隔
-        let gap_x = 37.;
-        let gap_y = 35.;
-
-        // ステージが進むほど開始位置が下になる
+        // 表示サイズ/オリジナルの画像サイズ
+        let scale = 2.3;
+        // 各個体の中心座標同士の間隔
+        let gap_x = 34.;
+        let gap_y = 8. * scale * 2.;
+        // ステージ1から9までの最下層個体の初期位置とトーチカの間隔
+        let distance_tochika_per_stage = [7, 4, 2, 1, 1, 1, 0, 0, 0];
+        // ステージが進むほど開始位置が下になる(一番低いときはトーチカに触れる位置)
         let mut invader_pos = Vec2::new(
             100.,
-            self.canvas_height - 350. + 25. * (stage_number - 1) as f64,
+            self.canvas_height
+                - 180.
+                - 8. * scale * (distance_tochika_per_stage[stage_number - 1] as f64 + 0.5),
         );
         for row in 0..5 {
             for column in 0..invader_column {

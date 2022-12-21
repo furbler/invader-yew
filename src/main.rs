@@ -61,7 +61,7 @@ struct AnimationCanvas {
     torchika: Option<ImageBitmap>,
     ufo: Ufo,
     audio: Audio,
-    stage_number: usize,
+    stage_number: usize, // 最初は1、最終は9
     callback: Closure<dyn FnMut()>,
     input_key_down: Rc<RefCell<input::KeyDown>>,
     need_to_screen_init: bool, // 真ならば画面全体の初期化が必要
@@ -354,6 +354,8 @@ impl AnimationCanvas {
                     self.scene = Scene::Play;
                     // UFOの出現タイマーを初期化する
                     self.ufo.reset_timer();
+
+                    log::info!("Stage{} start.", self.stage_number);
                 } else {
                     self.scene = Scene::LaunchStage(cnt - 1);
                 }
