@@ -580,13 +580,12 @@ impl EnemyManage {
         };
         self.bullets.push(bullet);
     }
-    // 全滅していたら偽を返す
     pub fn update(
         &mut self,
         ctx: &CanvasRenderingContext2d,
         player: &mut player::Player,
         audio: &Audio,
-    ) -> bool {
+    ) {
         if let Some(_) = self.explosion.show {
             // 爆発エフェクト表示
             self.explosion.update_render(ctx, &mut player.bullet);
@@ -594,12 +593,12 @@ impl EnemyManage {
             for bullet in &mut self.bullets {
                 // 敵が全滅していたら発射しない
                 if self.can_shot_enemy.len() == 0 {
-                    return false;
+                    return;
                 }
                 bullet.update(ctx, self.canvas_width, self.canvas_height, player);
             }
             // 爆発エフェクト表示中は敵の動きをすべて止める
-            return true;
+            return;
         }
 
         // 各敵個体の移動処理
@@ -683,7 +682,7 @@ impl EnemyManage {
         for bullet in &mut self.bullets {
             // 敵が全滅していたら発射しない
             if self.can_shot_enemy.len() == 0 {
-                return false;
+                return;
             }
             //弾が消滅済みで、かつ前回の射撃から(3発の弾共通で)一定時間経過して、かつ弾の爆発エフェクト表示が終了していた場合
             if !bullet.live && self.shot_interval > 70 && bullet.explosion.effect_cnt == None {
@@ -703,8 +702,8 @@ impl EnemyManage {
                     // 確率1/3でプレイヤーに一番近い敵が射撃する
                     i_shot_enemy = i_near_enemy;
                 } else {
-                    // 確率2/3でランダム
-                    i_shot_enemy = seed % self.can_shot_enemy.len();
+                    // 確率2/3でランダムな列から射撃
+                    i_shot_enemy = self.can_shot_enemy[seed % self.can_shot_enemy.len()];
                 }
                 bullet.set(Vec2::new(
                     self.enemys_list[i_shot_enemy].pos.x,
@@ -715,7 +714,6 @@ impl EnemyManage {
             bullet.update(ctx, self.canvas_width, self.canvas_height, player);
         }
         self.shot_interval += 1;
-        true
     }
     pub fn render(&mut self, ctx: &CanvasRenderingContext2d) {
         self.enemys_list.iter_mut().for_each(|enemy| {
@@ -805,5 +803,19 @@ impl EnemyManage {
         self.can_shot_enemy = core::array::from_fn::<usize, 11, _>(|i| i).to_vec();
         self.shot_interval = 0;
         self.play_sound_index = 0;
+    }
+    // 一番下の個体のy座標を、全滅していたら偽を返す
+    pub fn nadir_y(&self) -> Option<f64> {
+        if self.can_shot_enemy.len() <= 0 {
+            return None;
+        }
+        // 一番下の個体のy座標
+        let mut nadir_y = self.enemys_list[self.can_shot_enemy[0]].pos.y;
+        for i in &self.can_shot_enemy {
+            if self.enemys_list[*i].pos.y < nadir_y {
+                nadir_y = self.enemys_list[*i].pos.y;
+            }
+        }
+        Some(nadir_y)
     }
 }

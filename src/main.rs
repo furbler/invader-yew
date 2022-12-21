@@ -31,6 +31,7 @@ enum Scene {
     Pause,            // 一時停止状態
     Play,             // ゲーム実行中
     LaunchStage(i32), // ゲーム開始後、プレイヤーが操作可能になるまで
+    GameOver(i32),
 }
 
 pub enum Msg {
@@ -187,15 +188,16 @@ impl Component for AnimationCanvas {
             // 初期化
             Msg::Initialize => {
                 let canvas: HtmlCanvasElement = self.canvas.cast().unwrap();
-                let (canvas_width, canvas_height) = (canvas.width() as f64, canvas.height() as f64);
-                self.title = Title::new(canvas_width, canvas_height);
+                (self.canvas_width, self.canvas_height) =
+                    (canvas.width() as f64, canvas.height() as f64);
+                self.title = Title::new(self.canvas_width, self.canvas_height);
                 // 敵インベーダーの初期化
                 self.enemy_manage
-                    .register_enemys(canvas_width, canvas_height);
+                    .register_enemys(self.canvas_width, self.canvas_height);
                 // プレイヤーの初期化
                 self.player = Player::new(
-                    canvas_width,
-                    canvas_height,
+                    self.canvas_width,
+                    self.canvas_height,
                     self.player.image_front.clone().unwrap(),
                     self.player.bullet.image_front.clone().unwrap(),
                     self.player.bullet.image_land_front.clone().unwrap(),
@@ -277,6 +279,7 @@ impl AnimationCanvas {
             Scene::Title => {
                 // スタートボタンが押されたらゲーム開始
                 if self.input_key_down.borrow().shot {
+                    self.need_to_screen_init = true;
                     self.scene = Scene::LaunchStage(120);
                 } else {
                     self.title.render(&ctx);
@@ -289,8 +292,6 @@ impl AnimationCanvas {
                 }
             }
             Scene::LaunchStage(cnt) => {
-                (self.canvas_width, self.canvas_height) =
-                    (canvas.width() as f64, canvas.height() as f64);
                 ctx.set_global_alpha(1.);
                 // 画像のぼやけを防ぐ
                 ctx.set_image_smoothing_enabled(false);
@@ -324,6 +325,7 @@ impl AnimationCanvas {
                         .unwrap();
                     }
                     self.player.reset();
+                    self.player.life = 3;
                     self.enemy_manage.reset(&ctx, self.stage_number);
                     self.ufo.reset(&ctx);
                     // 初期化は最初のみ
@@ -358,21 +360,8 @@ impl AnimationCanvas {
                 self.player
                     .update(&ctx, &self.input_key_down.borrow(), &self.audio);
                 // 敵インベーダーの処理
-                let enemy_remain = self
-                    .enemy_manage
+                self.enemy_manage
                     .update(&ctx, &mut self.player, &self.audio);
-                // インベーダーが全滅した場合
-                if !enemy_remain {
-                    // 画面を初期化する
-                    self.need_to_screen_init = true;
-                    // ステージは9面の次は2面に戻る
-                    self.stage_number = if self.stage_number >= 9 {
-                        2
-                    } else {
-                        self.stage_number + 1
-                    };
-                    self.scene = Scene::LaunchStage(120);
-                }
 
                 // UFOの処理
                 self.ufo.update(
@@ -385,6 +374,62 @@ impl AnimationCanvas {
                 self.player.render(&ctx);
                 self.enemy_manage.render(&ctx);
                 self.ufo.render(&ctx);
+
+                if let Some(enemy_pos_y) = self.enemy_manage.nadir_y() {
+                    // 敵インベーダーがプレイヤーの高さまで侵攻した場合
+                    if self.player.pos.y - self.player.height / 2. < enemy_pos_y {
+                        // プレイヤーは破壊される
+                        self.player.break_cnt = Some(self.player.revival_set_cnt);
+                        // ゲームオーバー
+                        self.scene = Scene::GameOver(140);
+                    }
+                } else {
+                    // インベーダーが全滅した場合
+                    // 画面を初期化する
+                    self.need_to_screen_init = true;
+                    // ステージは9面の次は2面に戻る
+                    self.stage_number = if self.stage_number >= 9 {
+                        2
+                    } else {
+                        self.stage_number + 1
+                    };
+                    self.scene = Scene::LaunchStage(120);
+                }
+                // プレイヤーの残機が無くなったら
+                if self.player.life <= 0 {
+                    // ゲームオーバー
+                    self.scene = Scene::GameOver(140);
+                }
+            }
+            Scene::GameOver(cnt) => {
+                // プレイヤーの爆発エフェクトを最後まで表示
+                if let Some(explosion_cnt) = self.player.break_cnt {
+                    self.player
+                        .update(&ctx, &self.input_key_down.borrow(), &self.audio);
+                    // 爆発エフェクト表示が終わった後のプレイヤー復活はしない
+                    if explosion_cnt > 0 {
+                        self.player.render(&ctx);
+                    }
+                } else {
+                    // プレイヤーの爆発エフェクト表示が終わったら一定時間ゲームオーバー表示
+                    ctx.set_font("90px monospace");
+                    ctx.set_fill_style(&JsValue::from("rgba(200, 10, 10)"));
+                    ctx.fill_text(
+                        "GAME OVER",
+                        self.canvas_width / 2. - 200.,
+                        self.canvas_height / 4.,
+                    )
+                    .unwrap();
+                    self.scene = Scene::GameOver(cnt - 1);
+                }
+                if cnt < 0 {
+                    // 画面クリア
+                    ctx.set_fill_style(&JsValue::from("rgb(0,0,0)"));
+                    ctx.fill_rect(0.0, 0.0, self.canvas_width, self.canvas_height);
+                    self.ufo.reset(&ctx);
+                    // タイトルに戻る
+                    self.scene = Scene::Title;
+                }
             }
         }
         window()
