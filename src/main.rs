@@ -292,6 +292,16 @@ impl AnimationCanvas {
                 }
             }
             Scene::LaunchStage(cnt) => {
+                // インベーダーを全滅させた後は休憩のため長めに間をおく
+                if self.stage_number > 1 && cnt > 120 {
+                    self.scene = Scene::LaunchStage(cnt - 1);
+
+                    window()
+                        .unwrap()
+                        .request_animation_frame(self.callback.as_ref().unchecked_ref())
+                        .unwrap();
+                    return;
+                }
                 ctx.set_global_alpha(1.);
                 // 画像のぼやけを防ぐ
                 ctx.set_image_smoothing_enabled(false);
@@ -333,7 +343,7 @@ impl AnimationCanvas {
                 }
 
                 // 敵インベーダーの処理
-                // プレイヤーが操作可能になるまで敵は攻撃しない
+                // プレイヤーが操作可能になるまで敵は動くが攻撃しない
                 self.enemy_manage.set_shot_interval(0);
                 self.enemy_manage
                     .update(&ctx, &mut self.player, &self.audio);
@@ -393,7 +403,7 @@ impl AnimationCanvas {
                     } else {
                         self.stage_number + 1
                     };
-                    self.scene = Scene::LaunchStage(120);
+                    self.scene = Scene::LaunchStage(240);
                 }
                 // プレイヤーの残機が無くなったら
                 if self.player.life <= 0 {
