@@ -251,7 +251,7 @@ impl Enemy {
         if player_bullet.live {
             // 弾と衝突していた場合
             if player_bullet
-                .pre_pos
+                .pos
                 .collision(&self.pos, self.width, self.height)
             {
                 // 自分を削除
@@ -310,8 +310,8 @@ impl Enemy {
             self.remove = false;
         }
 
-        // 動く時以外または死んでいる場合は描画しない
-        if !self.move_turn || !self.live {
+        // 死んでいる場合は描画しない
+        if !self.live {
             return;
         }
         // 表示画像選択
