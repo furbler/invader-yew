@@ -1,4 +1,4 @@
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct Vec2 {
     pub x: f64,
     pub y: f64,
@@ -18,6 +18,12 @@ impl Vec2 {
             true
         } else {
             false
+        }
+    }
+    pub fn round(&self) -> Vec2 {
+        Vec2 {
+            x: (self.x as i32) as f64,
+            y: (self.y as i32) as f64,
         }
     }
 }

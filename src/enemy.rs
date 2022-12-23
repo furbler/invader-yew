@@ -29,7 +29,8 @@ struct Bullet {
 impl Bullet {
     // 弾を指定された場所から発射
     fn set(&mut self, pos: Vec2) {
-        self.pos = pos;
+        // 小数点以下を0にしておく
+        self.pos = pos.round();
         self.pre_pos = self.pos;
         self.live = true;
     }
@@ -83,11 +84,12 @@ impl Bullet {
                     self.height,
                 );
             }
+            return;
         }
 
         // トーチカまたはプレイヤーの弾への着弾確認
         // とりあえず弾の周りのデータまであれば十分
-        let left_pos = Vec2::new(self.pos.x - self.width / 2. - 2., self.pos.y);
+        let left_pos = Vec2::new(self.pos.x - self.width / 2. - 1., self.pos.y);
         let right_pos = Vec2::new(self.pos.x + self.width / 2. + 2., self.pos.y);
         let collision = pixel_ctrl::detect_pixel_diff(
             canvas_width,
@@ -286,9 +288,9 @@ impl Enemy {
         // 動く時
         if self.move_turn {
             // 方向を考慮して動く
-            self.pos.x += 8. * move_dir as f64;
+            self.pos.x += 7. * move_dir as f64;
             if move_down {
-                self.pos.y += 20.;
+                self.pos.y += 8. * 2.3;
             }
             // 表示する画像を切り替える
             self.show_image_type = !self.show_image_type
@@ -372,8 +374,8 @@ pub struct EnemyManage {
 impl EnemyManage {
     pub fn default() -> Self {
         EnemyManage {
-            left_border: 50.,
-            right_border: 550.,
+            left_border: 35.,
+            right_border: 505.,
             move_dir: 1,
             move_dir_invert: false,
             move_down: false,
@@ -742,13 +744,14 @@ impl EnemyManage {
         // 表示サイズ/オリジナルの画像サイズ
         let scale = 2.3;
         // 各個体の中心座標同士の間隔
-        let gap_x = 34.;
+        let gap_x = 36.;
         let gap_y = 8. * scale * 2.;
+        let init_x = 60.;
         // ステージ1から9までの最下層個体の初期位置とトーチカの間隔
         let distance_tochika_per_stage = [7, 4, 2, 1, 1, 1, 0, 0, 0];
         // ステージが進むほど開始位置が下になる(一番低いときはトーチカに触れる位置)
         let mut invader_pos = Vec2::new(
-            100.,
+            init_x,
             self.canvas_height
                 - 180.
                 - 8. * scale * (distance_tochika_per_stage[stage_number - 1] as f64 + 0.5),
@@ -764,7 +767,7 @@ impl EnemyManage {
 
                 invader_pos.x += gap_x;
             }
-            invader_pos.x = 100.;
+            invader_pos.x = init_x;
             invader_pos.y -= gap_y;
         }
         self.enemys_list[0].move_turn = true;
@@ -808,7 +811,7 @@ impl EnemyManage {
         // 一番下の個体のy座標
         let mut nadir_y = self.enemys_list[self.can_shot_enemy[0]].pos.y;
         for i in &self.can_shot_enemy {
-            if self.enemys_list[*i].pos.y < nadir_y {
+            if self.enemys_list[*i].pos.y > nadir_y {
                 nadir_y = self.enemys_list[*i].pos.y;
             }
         }

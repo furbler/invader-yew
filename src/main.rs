@@ -258,7 +258,7 @@ impl Component for AnimationCanvas {
             // キャンバスのサイズはここで指定
                 <canvas
                     id="canvas"
-                    width="600" height="600"
+                    width="540" height="600"
                     ref={self.canvas.clone()}/>
                 <div class="volume-buttons-list">
                     <button class="volume-button" onclick={ctx.link().callback(|_| Msg::AudioVolumeUp)}>{ "Volume Up" }</button>
@@ -424,11 +424,11 @@ impl AnimationCanvas {
                     }
                 } else {
                     // プレイヤーの爆発エフェクト表示が終わったら一定時間ゲームオーバー表示
-                    ctx.set_font("90px monospace");
+                    ctx.set_font("80px monospace");
                     ctx.set_fill_style(&JsValue::from("rgba(200, 10, 10)"));
                     ctx.fill_text(
                         "GAME OVER",
-                        self.canvas_width / 2. - 200.,
+                        self.canvas_width / 2. - 250.,
                         self.canvas_height / 4.,
                     )
                     .unwrap();
