@@ -146,8 +146,6 @@ impl Ufo {
         self.remove_shadow(ctx);
         // 時間をリセット
         self.lapse_time = Instant::now();
-        // 方向反転
-        self.move_dir *= -1;
         self.pos.x = -10.;
         // 飛行音のループ再生を止める
         if let Some(sound_node) = &self.flying_sound {
@@ -168,7 +166,7 @@ impl Ufo {
         audio: &Audio,
     ) {
         self.explosion.update(ctx);
-        if self.lapse_time.elapsed().as_secs() < 5 {
+        if self.lapse_time.elapsed().as_secs() < 25 {
             // 一定時間経過するまでは何もしない
             return;
         }
@@ -187,7 +185,7 @@ impl Ufo {
             player_bullet.remove = Some(player_bullet.pre_pos);
             player_bullet.can_shot = true;
             // 表を参考に点数を加算
-            let got_score = self.score_table[player_bullet.shot_cnt as usize % 15];
+            let got_score = self.score_table[(player_bullet.shot_cnt - 1) as usize % 15];
             player_bullet.score.sum += got_score;
             // 表示用に点数保存
             self.explosion.got_score = got_score;
@@ -199,12 +197,14 @@ impl Ufo {
         }
         if self.pos.x < 0. {
             // UFOが出現する瞬間
-            // 右から左へ動く
-            if self.move_dir < 0 {
+            // プレイヤーの発射数が偶数であれば右から左へ動く
+            if player_bullet.shot_cnt % 2 == 0 {
                 self.pos.x = canvas_width - self.width / 2.;
+                self.move_dir = -1;
             } else {
-                // 左から右へ動く
+                // 奇数ならば左から右へ動く
                 self.pos.x = self.width / 2.;
+                self.move_dir = 1;
             }
             self.pre_pos = self.pos;
             // UFO飛行音ループ再生開始
@@ -223,7 +223,7 @@ impl Ufo {
     }
 
     pub fn render(&mut self, ctx: &CanvasRenderingContext2d) {
-        if self.lapse_time.elapsed().as_secs() < 5 || self.pos.x < 0. {
+        if self.lapse_time.elapsed().as_secs() < 25 || self.pos.x < 0. {
             return;
         }
         // 一定時間経過して、かつupdate関数が実行されていた場合
