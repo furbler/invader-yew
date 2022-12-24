@@ -117,7 +117,7 @@ impl Ufo {
             width: image.width() as f64 * 2.3,
             height: image.height() as f64 * 2.3,
             // ここで高さを指定する
-            pos: Vec2 { x: -10., y: 70. },
+            pos: Vec2 { x: -10., y: 80. },
             pre_pos: Vec2 { x: -10., y: -10. },
             image: Some(image),
             explosion: Explosion {

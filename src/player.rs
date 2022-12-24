@@ -131,7 +131,7 @@ impl Bullet {
             // 弾の移動処理
             self.pos.y -= 12.;
             // 弾が画面上に行ったら
-            if self.pos.y < 20. {
+            if self.pos.y < 65. {
                 // 着弾処理
                 self.land_obstacle();
             } else {
@@ -246,6 +246,7 @@ pub struct Player {
     pub image_front: Option<ImageBitmap>, // 表画像
     pub bullet: Bullet,                   // 持ち弾(1発のみ)
     pub life: i32,                        // 自機含む残機(0になるとゲームオーバー)
+    life_gained: bool,                    // 獲得点数が一定を超えたときの残機増加が実行済みならば真
     width_explosion: f64,
     height_explosion: f64,
     pub image_explosion_1: Option<ImageBitmap>,
@@ -266,6 +267,7 @@ impl Player {
             break_cnt: None,
             image_front: None,
             life: 0,
+            life_gained: false,
             bullet: Bullet::empty(),
             width_explosion: 0.,
             height_explosion: 0.,
@@ -294,6 +296,7 @@ impl Player {
             revival_set_cnt: 130,
             break_cnt: None,
             life: 3,
+            life_gained: false,
             bullet: Bullet::new_image(
                 image_bullet_front,
                 image_land_bullet_front,
@@ -403,6 +406,13 @@ impl Player {
             self.canvas_width,
             audio,
         );
+        // 得点が1500点を超えて、かつまだ残機増加していない場合
+        if self.bullet.score.sum >= 1500 && !self.life_gained {
+            // 残機1増加
+            self.life += 1;
+            // 残機が増えるのは１度だけ
+            self.life_gained = true;
+        }
     }
     fn render_remain_life(&self, ctx: &CanvasRenderingContext2d) {
         let x = 20.;
