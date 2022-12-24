@@ -89,7 +89,7 @@ impl Bullet {
 
         // トーチカまたはプレイヤーの弾への着弾確認
         // とりあえず弾の周りのデータまであれば十分
-        let left_pos = Vec2::new(self.pos.x - self.width / 2. - 1., self.pos.y);
+        let left_pos = Vec2::new(self.pos.x - self.width / 2. - 2., self.pos.y);
         let right_pos = Vec2::new(self.pos.x + self.width / 2. + 2., self.pos.y);
         let collision = pixel_ctrl::detect_pixel_diff(
             canvas_width,
@@ -582,15 +582,19 @@ impl EnemyManage {
         if let Some(_) = self.explosion.show {
             // 爆発エフェクト表示
             self.explosion.update_render(ctx, &mut player.bullet);
-            //敵弾は動かす
+            // 既に発射した敵弾は動かす
             for bullet in &mut self.bullets {
-                // 敵が全滅していたら発射しない
-                if self.can_shot_enemy.len() == 0 {
-                    return;
-                }
                 bullet.update(ctx, self.canvas_width, self.canvas_height, player);
             }
             // 爆発エフェクト表示中は敵の動きをすべて止める
+            return;
+        }
+        // プレイヤーが爆発中は、インベーダーの動きをすべて止める
+        if let Some(_) = player.break_cnt {
+            // 既に発射した敵弾は動かす
+            for bullet in &mut self.bullets {
+                bullet.update(ctx, self.canvas_width, self.canvas_height, player);
+            }
             return;
         }
 

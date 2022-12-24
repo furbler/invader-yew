@@ -469,7 +469,7 @@ fn main() {
 // 指定した範囲を背景色で塗りつぶす
 fn draw_background_rect(ctx: &CanvasRenderingContext2d, x: f64, y: f64, width: f64, height: f64) {
     ctx.set_fill_style(&JsValue::from("rgb(0,0,0)"));
-    // firefox以外のブラウザで、画像描画範囲に対し塗りつぶし範囲が僅かに斜め下にずれる
-    // その対策として、+x軸、-y軸方向にそれぞれ塗りつぶし範囲を1pixel増やす
-    ctx.fill_rect(x, y - 1., width + 1., height + 1.);
+    // firefox以外のブラウザで、画像描画範囲に対し塗りつぶし範囲が僅かにずれる
+    // その対策として、塗りつぶし範囲を1pixel増やす
+    ctx.fill_rect(x - 1., y - 1., width + 2., height + 2.);
 }
