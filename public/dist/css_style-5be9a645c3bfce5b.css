@@ -1,0 +1,46 @@
+html {
+    background-color: black;
+}
+
+canvas {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+
+    margin-bottom: 2em;
+}
+
+#audio-button {
+    width: 250px;
+    font-size: 30px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    color: #fff;
+    background-color: #eb6100;
+}
+
+#audio-button:hover {
+    color: #fff;
+    background: #ccc100;
+}
+
+
+.volume-buttons-list {
+    display: flex;
+    justify-content: center;
+
+}
+
+.volume-button {
+    color: #ddd;
+    margin-right: 30px;
+    background: #222;
+    border-bottom: 5px solid #00551d;
+}
+
+.volume-button:hover {
+    background: #222;
+    margin-top: 3px;
+    border-bottom: 2px solid #00551d;
+}
