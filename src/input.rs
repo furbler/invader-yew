@@ -51,7 +51,7 @@ fn function_key_down(event: web_sys::KeyboardEvent, input_data: &mut KeyDown) {
         "ArrowRight" | "d" => {
             input_data.right = true;
         }
-        "Space" | "Enter" => {
+        "Space" | "Enter" | "z" => {
             input_data.shot = true;
         }
         "Escape" => {
@@ -70,7 +70,7 @@ fn function_key_up(event: web_sys::KeyboardEvent, input_data: &mut KeyDown) {
         "ArrowRight" | "d" => {
             input_data.right = false;
         }
-        "Space" | "Enter" => {
+        "Space" | "Enter" | "z" => {
             input_data.shot = false;
         }
         "Escape" => {

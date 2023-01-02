@@ -16,11 +16,11 @@ impl Title {
     pub fn render(&self, ctx: &CanvasRenderingContext2d) {
         ctx.set_font("90px monospace");
         ctx.set_fill_style(&JsValue::from("rgba(200, 10, 10)"));
-        ctx.fill_text("Invader", self.pos.x - 200., self.pos.y)
+        ctx.fill_text("Invader", self.pos.x - 170., self.pos.y)
             .unwrap();
 
         ctx.set_font("40px monospace");
-        ctx.fill_text("Press Enter", self.pos.x - 150., self.pos.y + 80.)
+        ctx.fill_text("Press Enter", self.pos.x - 120., self.pos.y + 80.)
             .unwrap();
     }
 }

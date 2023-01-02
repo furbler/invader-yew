@@ -310,10 +310,18 @@ impl Player {
             canvas_height,
         }
     }
-    pub fn reset(&mut self) {
+    // ステージが進むときの初期化
+    pub fn stage_reset(&mut self) {
         self.pos = Vec2::new(70., self.canvas_height - 100.);
         self.pre_pos = Vec2::new(70., self.canvas_height - 100.);
         self.bullet.shot_cnt = 0;
+    }
+    // 新しくゲームを始めるときの初期化
+    pub fn all_reset(&mut self) {
+        self.stage_reset();
+        self.bullet.score.sum = 0;
+        self.life = 3;
+        self.life_gained = false;
     }
     pub fn update(&mut self, ctx: &CanvasRenderingContext2d, input_key: &KeyDown, audio: &Audio) {
         //プレイヤーが撃破されてから一定時間

@@ -65,6 +65,7 @@ struct AnimationCanvas {
     callback: Closure<dyn FnMut()>,
     input_key_down: Rc<RefCell<input::KeyDown>>,
     need_to_screen_init: bool, // 真ならば画面全体の初期化が必要
+    new_game: bool,            // 真ならば残機、点数などをすべてリセットする
     canvas_width: f64,
     canvas_height: f64,
     pause: Pause,
@@ -104,6 +105,7 @@ impl Component for AnimationCanvas {
                 pause: false,
             })),
             need_to_screen_init: true,
+            new_game: true,
             stage_number: 1,
             canvas_width: 0.,
             canvas_height: 0.,
@@ -280,6 +282,7 @@ impl AnimationCanvas {
                 // スタートボタンが押されたらゲーム開始
                 if self.input_key_down.borrow().shot {
                     self.need_to_screen_init = true;
+                    self.new_game = true;
                     self.scene = Scene::LaunchStage(120);
                 } else {
                     self.title.render(&ctx);
@@ -334,12 +337,20 @@ impl AnimationCanvas {
                         )
                         .unwrap();
                     }
-                    self.player.reset();
-                    self.player.life = 3;
+                    // 新しくゲーム開始
+                    if self.new_game {
+                        self.stage_number = 1;
+                        self.player.all_reset();
+                    } else {
+                        // ステージが進む
+                        self.player.stage_reset();
+                    }
                     self.enemy_manage.reset(&ctx, self.stage_number);
                     self.ufo.reset(&ctx);
+
                     // 初期化は最初のみ
                     self.need_to_screen_init = false;
+                    self.new_game = false;
                 }
 
                 // 敵インベーダーの処理
@@ -399,6 +410,7 @@ impl AnimationCanvas {
                     // インベーダーが全滅した場合
                     // 画面を初期化する
                     self.need_to_screen_init = true;
+                    self.new_game = false;
                     // ステージは9面の次は2面に戻る
                     self.stage_number = if self.stage_number >= 9 {
                         2
@@ -414,6 +426,7 @@ impl AnimationCanvas {
                 }
             }
             Scene::GameOver(cnt) => {
+                self.new_game = true;
                 // プレイヤーの爆発エフェクトを最後まで表示
                 if let Some(explosion_cnt) = self.player.break_cnt {
                     self.player
@@ -428,7 +441,7 @@ impl AnimationCanvas {
                     ctx.set_fill_style(&JsValue::from("rgba(200, 10, 10)"));
                     ctx.fill_text(
                         "GAME OVER",
-                        self.canvas_width / 2. - 250.,
+                        self.canvas_width / 2. - 180.,
                         self.canvas_height / 4.,
                     )
                     .unwrap();
